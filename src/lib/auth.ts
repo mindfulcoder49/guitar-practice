@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import bcrypt from 'bcryptjs'
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  trustHost: true,   // required when running behind a reverse proxy (Fly.io, Vercel, etc.)
   providers: [
     CredentialsProvider({
       name: 'credentials',

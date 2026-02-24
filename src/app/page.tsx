@@ -23,7 +23,7 @@ export default function Home() {
           <Button asChild size="lg" className="bg-purple-600 hover:bg-purple-700 text-white">
             <Link href="/auth/register">Get Started Free</Link>
           </Button>
-          <Button asChild size="lg" variant="outline" className="border-white/20 text-white hover:bg-white/10">
+          <Button asChild size="lg" variant="outline" className="border-white/20 text-black">
             <Link href="/auth/login">Sign In</Link>
           </Button>
         </div>

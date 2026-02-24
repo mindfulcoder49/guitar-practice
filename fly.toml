@@ -1,4 +1,4 @@
-app = "guitar-practice"
+app = "alcivartech-guitar"
 primary_region = "iad"
 
 [build]

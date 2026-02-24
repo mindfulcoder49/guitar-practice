@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { openai, buildSystemPrompt } from '@/lib/openai'
+import { getOpenAI, buildSystemPrompt } from '@/lib/openai'
 
 export async function POST(req: NextRequest) {
   const session = await auth()
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
 
   const systemPrompt = buildSystemPrompt(chordNames)
 
-  const stream = await openai.chat.completions.create({
+  const stream = await getOpenAI().chat.completions.create({
     model: 'gpt-4o',
     messages: [
       { role: 'system', content: systemPrompt },

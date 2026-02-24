@@ -1,8 +1,13 @@
 import OpenAI from 'openai'
 
-export const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+// Lazy singleton — instantiated on first request, not at module load time.
+// This prevents Next.js from crashing during `next build` when env vars
+// are not available in the build environment.
+let _client: OpenAI | undefined
+
+export function getOpenAI(): OpenAI {
+  return (_client ??= new OpenAI({ apiKey: process.env.OPENAI_API_KEY }))
+}
 
 export function buildSystemPrompt(learnedChords: string[]): string {
   if (learnedChords.length === 0) {
