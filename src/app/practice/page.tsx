@@ -33,6 +33,7 @@ function PracticeContent() {
   const [misses, setMisses] = useState(0)
   const [progression, setProgression] = useState<ProgressionChord[]>(DEFAULT_PROGRESSION)
   const [learnedChords, setLearnedChords] = useState<string[]>([])
+  const [mode, setMode] = useState<'practice' | 'test'>('practice')
 
   // Load AI progression from URL if present
   useEffect(() => {
@@ -135,6 +136,7 @@ function PracticeContent() {
             running={running}
             currentMatch={currentMatch}
             onScore={handleScore}
+            mode={mode}
           />
 
           <Metronome
@@ -142,6 +144,30 @@ function PracticeContent() {
             onBpmChange={setBpm}
             running={running}
           />
+
+          {/* Mode toggle */}
+          <div className="flex gap-1 p-1 bg-muted rounded-lg">
+            <Button
+              size="sm"
+              variant={mode === 'practice' ? 'default' : 'ghost'}
+              className="flex-1 text-xs"
+              onClick={() => setMode('practice')}
+              disabled={running}
+              title="Scrolling pauses on a missed chord until you play it"
+            >
+              Practice
+            </Button>
+            <Button
+              size="sm"
+              variant={mode === 'test' ? 'default' : 'ghost'}
+              className="flex-1 text-xs"
+              onClick={() => setMode('test')}
+              disabled={running}
+              title="Scrolling never stops — scored like a real run"
+            >
+              Test
+            </Button>
+          </div>
 
           {/* Controls */}
           <div className="flex gap-3">
