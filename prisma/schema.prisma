@@ -1,0 +1,42 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String           @id @default(cuid())
+  email         String           @unique
+  name          String?
+  passwordHash  String
+  createdAt     DateTime         @default(now())
+  learnedChords LearnedChord[]
+  sessions      PracticeSession[]
+}
+
+model LearnedChord {
+  id        String   @id @default(cuid())
+  userId    String
+  chordName String
+  learnedAt DateTime @default(now())
+  accuracy  Float    @default(0)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, chordName])
+}
+
+model PracticeSession {
+  id           String   @id @default(cuid())
+  userId       String
+  mode         String   // "flashcard" | "guitar-hero"
+  chordsPlayed String   // JSON array of chord names
+  score        Int      @default(0)
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

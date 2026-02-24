@@ -1,65 +1,85 @@
-import Image from "next/image";
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Guitar, Music, Zap, MessageSquare } from 'lucide-react'
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
+      {/* Hero */}
+      <div className="container mx-auto px-4 py-20 text-center">
+        <Badge className="mb-4 bg-purple-500/20 text-purple-300 border-purple-500/30">
+          AI-Powered Guitar Learning
+        </Badge>
+        <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white to-purple-300 bg-clip-text text-transparent">
+          Guitar Practice
+        </h1>
+        <p className="text-xl text-slate-300 mb-10 max-w-2xl mx-auto">
+          Learn chords with real-time microphone detection, Guitar Hero-style practice,
+          and an AI assistant that creates custom progressions from your learned chords.
+        </p>
+        <div className="flex gap-4 justify-center flex-wrap">
+          <Button asChild size="lg" className="bg-purple-600 hover:bg-purple-700 text-white">
+            <Link href="/auth/register">Get Started Free</Link>
+          </Button>
+          <Button asChild size="lg" variant="outline" className="border-white/20 text-white hover:bg-white/10">
+            <Link href="/auth/login">Sign In</Link>
+          </Button>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </div>
+
+      {/* Features */}
+      <div className="container mx-auto px-4 pb-20">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            {
+              icon: <Guitar className="w-8 h-8 text-purple-400" />,
+              title: 'Real-time Detection',
+              desc: 'Play into your mic and instantly see which chord you\'re playing with confidence scores',
+            },
+            {
+              icon: <Zap className="w-8 h-8 text-yellow-400" />,
+              title: 'Guitar Hero Mode',
+              desc: 'Chord blocks scroll toward you in time with a metronome. Hit the right chord to score!',
+            },
+            {
+              icon: <MessageSquare className="w-8 h-8 text-green-400" />,
+              title: 'AI Assistant',
+              desc: 'Ask GPT-4o for custom progressions based on your learned chords — then practice them directly',
+            },
+            {
+              icon: <Music className="w-8 h-8 text-blue-400" />,
+              title: 'Built-in Tuner',
+              desc: 'Chromatic tuner with needle gauge, perfect for getting in tune before every session',
+            },
+          ].map((f, i) => (
+            <Card key={i} className="bg-white/5 border-white/10 text-white">
+              <CardContent className="p-6">
+                <div className="mb-4">{f.icon}</div>
+                <h3 className="font-semibold text-lg mb-2">{f.title}</h3>
+                <p className="text-slate-400 text-sm">{f.desc}</p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
-      </main>
+
+        {/* Curriculum */}
+        <div className="mt-16 text-center">
+          <h2 className="text-3xl font-bold mb-4">9-Chord Curriculum</h2>
+          <p className="text-slate-400 mb-8">Progress from beginner chords to the challenging F barre chord</p>
+          <div className="flex flex-wrap justify-center gap-3">
+            {['Em', 'Am', 'E', 'A', 'D', 'G', 'C', 'Dm', 'F'].map((chord, i) => (
+              <div key={chord} className="flex items-center gap-2">
+                <div className="w-12 h-12 rounded-full bg-purple-600/30 border border-purple-500/40 flex items-center justify-center font-bold">
+                  {chord}
+                </div>
+                {i < 8 && <div className="w-4 h-0.5 bg-purple-500/30" />}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
-  );
+  )
 }
