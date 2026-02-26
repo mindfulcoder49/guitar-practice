@@ -55,6 +55,7 @@ interface ChordHighwayProps {
   currentMatch: ChordMatch | null
   onScore: (hit: boolean, chord: string) => void
   mode?: 'practice' | 'test'
+  immersive?: boolean
 }
 
 // ─── Horizontal chord card ────────────────────────────────────────────────────
@@ -285,7 +286,7 @@ function GemColumn({ chordName, flash }: {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function ChordHighway({
-  progression, bpm, running, currentMatch, onScore, mode = 'test',
+  progression, bpm, running, currentMatch, onScore, mode = 'test', immersive = false,
 }: ChordHighwayProps) {
 
   const [blocks, setBlocks]         = useState<ChordBlock[]>([])
@@ -451,7 +452,7 @@ export function ChordHighway({
       ]
     : []
 
-  const totalHeight = LANE_HEIGHT * 6 + 20
+  const totalHeight = immersive ? LANE_HEIGHT * 6 + 120 : LANE_HEIGHT * 6 + 20
 
   return (
     <div className="flex flex-col gap-3">

@@ -18,6 +18,9 @@ model User {
   createdAt     DateTime         @default(now())
   learnedChords LearnedChord[]
   sessions      PracticeSession[]
+  learnedSongs  LearnedSong[]
+  songSessions  SongSession[]
+  catalogItems  CatalogItem[]
 }
 
 model LearnedChord {
@@ -39,4 +42,36 @@ model PracticeSession {
   score        Int      @default(0)
   createdAt    DateTime @default(now())
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model LearnedSong {
+  id        String   @id @default(cuid())
+  userId    String
+  songId    String
+  accuracy  Float    @default(0)
+  learnedAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, songId])
+}
+
+model SongSession {
+  id        String   @id @default(cuid())
+  userId    String
+  songId    String
+  score     Int      @default(0)
+  hits      Int      @default(0)
+  misses    Int      @default(0)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CatalogItem {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  type      String   // 'chord-progression' | 'melody' | 'fingerpick'
+  data      String   // JSON-stringified
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

@@ -4,14 +4,15 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
-import { Guitar, BookOpen, Zap, MessageSquare, Music2, LayoutDashboard, LogOut } from 'lucide-react'
+import { Guitar, BookOpen, Zap, MessageSquare, LayoutDashboard, LogOut, Music, Library } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/learn', label: 'Learn', icon: BookOpen },
-  { href: '/practice', label: 'Practice', icon: Zap },
-  { href: '/tuner', label: 'Tuner', icon: Music2 },
-  { href: '/chat', label: 'AI Chat', icon: MessageSquare },
+  { href: '/dashboard', label: 'Home',     icon: LayoutDashboard },
+  { href: '/learn',     label: 'Learn',    icon: BookOpen },
+  { href: '/practice',  label: 'Practice', icon: Zap },
+  { href: '/songs',     label: 'Songs',    icon: Music },
+  { href: '/chat',      label: 'Chat',     icon: MessageSquare },
+  { href: '/catalog',   label: 'Catalog',  icon: Library },
 ]
 
 export function Navbar({ userName }: { userName?: string | null }) {
@@ -74,11 +75,11 @@ export function Navbar({ userName }: { userName?: string | null }) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center justify-center gap-1 flex-1 py-2 text-xs min-h-[56px] transition-colors ${
+                className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-2 text-[10px] min-h-[56px] transition-colors ${
                   active ? 'text-purple-600' : 'text-muted-foreground'
                 }`}
               >
-                <Icon className="w-5 h-5" />
+                <Icon className="w-4 h-4" />
                 <span className="leading-none">{item.label}</span>
               </Link>
             )

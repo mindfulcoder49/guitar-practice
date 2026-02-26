@@ -2,9 +2,16 @@ import { CHORD_TEMPLATES, CURRICULUM_ORDER } from './chords'
 import { ChordMatch } from '@/types'
 
 const ROLLING_WINDOW = 15   // more frames = smoother, less jittery
-const DETECTION_THRESHOLD = 0.55  // lenient — soft strums still register
 
-function cosineSimilarity(a: number[], b: number[]): number {
+// Sørensen-Dice coefficient: 2·dot(a,b) / (|a|² + |b|²)
+// Unlike cosine similarity, Dice penalises a template for having active notes
+// that are NOT present in the detected chroma. This prevents superset chords
+// like Fmaj7 {F,A,C,E} from outscoring Am {A,C,E} when only Am notes are heard:
+// any F energy not in the input drags Fmaj7's Dice score below Am's.
+// Note: Dice ≤ cosine for all non-negative vectors, so the threshold is lower.
+const DETECTION_THRESHOLD = 0.40
+
+function diceSimilarity(a: number[], b: number[]): number {
   let dot = 0
   let normA = 0
   let normB = 0
@@ -13,9 +20,9 @@ function cosineSimilarity(a: number[], b: number[]): number {
     normA += a[i] * a[i]
     normB += b[i] * b[i]
   }
-  const denom = Math.sqrt(normA) * Math.sqrt(normB)
+  const denom = normA + normB
   if (denom === 0) return 0
-  return dot / denom
+  return (2 * dot) / denom
 }
 
 function normalize(vec: number[]): number[] {
@@ -31,7 +38,7 @@ export function matchChord(chromagram: number[]): ChordMatch | null {
   for (const chordName of CURRICULUM_ORDER) {
     const template = CHORD_TEMPLATES[chordName]
     if (!template) continue
-    const similarity = cosineSimilarity(normalizedInput, template.chromagram)
+    const similarity = diceSimilarity(normalizedInput, template.chromagram)
     if (!bestMatch || similarity > bestMatch.confidence) {
       bestMatch = { chord: chordName, confidence: similarity }
     }

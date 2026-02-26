@@ -8,13 +8,13 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { CURRICULUM_ORDER } from '@/lib/chords'
-import { BookOpen, Zap, MessageSquare, Music2, CheckCircle, Clock } from 'lucide-react'
+import { BookOpen, Zap, MessageSquare, Music2, CheckCircle, Clock, Music, BookmarkCheck } from 'lucide-react'
 
 export default async function DashboardPage() {
   const session = await auth()
   if (!session?.user?.id) redirect('/auth/login')
 
-  const [learnedChords, recentSessions] = await Promise.all([
+  const [learnedChords, recentSessions, learnedSongs] = await Promise.all([
     prisma.learnedChord.findMany({
       where: { userId: session.user.id },
       orderBy: { learnedAt: 'asc' },
@@ -23,6 +23,10 @@ export default async function DashboardPage() {
       where: { userId: session.user.id },
       orderBy: { createdAt: 'desc' },
       take: 5,
+    }),
+    prisma.learnedSong.findMany({
+      where: { userId: session.user.id },
+      select: { songId: true },
     }),
   ])
 
@@ -70,7 +74,7 @@ export default async function DashboardPage() {
         </Card>
 
         {/* Quick actions */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           {[
             {
               href: nextChord ? `/learn/${nextChord}` : '/learn',
@@ -87,18 +91,25 @@ export default async function DashboardPage() {
               color: 'bg-yellow-50 border-yellow-200',
             },
             {
+              href: '/songs',
+              icon: <Music className="w-6 h-6 text-purple-500" />,
+              title: 'Songs & Patterns',
+              desc: learnedSongs.length > 0 ? `${learnedSongs.length} songs learned` : 'Learn melodies & riffs',
+              color: 'bg-purple-50 border-purple-200',
+            },
+            {
               href: '/chat',
               icon: <MessageSquare className="w-6 h-6 text-green-600" />,
-              title: 'AI Chatbot',
-              desc: 'Get progressions',
+              title: 'AI Chat',
+              desc: 'Get progressions & songs',
               color: 'bg-green-50 border-green-200',
             },
             {
-              href: '/tuner',
-              icon: <Music2 className="w-6 h-6 text-blue-600" />,
-              title: 'Tuner',
-              desc: 'Tune your guitar',
-              color: 'bg-blue-50 border-blue-200',
+              href: '/catalog',
+              icon: <BookmarkCheck className="w-6 h-6 text-indigo-600" />,
+              title: 'My Catalog',
+              desc: 'Saved progressions & songs',
+              color: 'bg-indigo-50 border-indigo-200',
             },
           ].map(action => (
             <Link key={action.href} href={action.href}>

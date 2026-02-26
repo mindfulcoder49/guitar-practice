@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ProgressionChord, ChordMatch } from '@/types'
-import { Play, Square, RotateCcw, Zap } from 'lucide-react'
+import { Play, Square, RotateCcw, Zap, Maximize2, Minimize2, Settings, BookmarkPlus } from 'lucide-react'
 import { CURRICULUM_ORDER } from '@/lib/chords'
 import { toast } from 'sonner'
 
@@ -34,6 +34,8 @@ function PracticeContent() {
   const [progression, setProgression] = useState<ProgressionChord[]>(DEFAULT_PROGRESSION)
   const [learnedChords, setLearnedChords] = useState<string[]>([])
   const [mode, setMode] = useState<'practice' | 'test'>('practice')
+  const [immersive, setImmersive] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
 
   // Load AI progression from URL if present
   useEffect(() => {
@@ -67,6 +69,7 @@ function PracticeContent() {
 
   async function handleStop() {
     setRunning(false)
+    setImmersive(false)
     if (hits + misses > 0) {
       try {
         await fetch('/api/progress', {
@@ -106,8 +109,104 @@ function PracticeContent() {
     toast.success('Loaded your learned chords')
   }
 
+  function handleStart() {
+    handleReset()
+    setRunning(true)
+    // Suggest immersive on narrow viewport
+    if (typeof window !== 'undefined' && window.innerWidth < 768 && !immersive) {
+      toast('Tip: try Immersive mode for full-screen practice!', {
+        action: { label: 'Go Immersive', onClick: () => setImmersive(true) },
+      })
+    }
+  }
+
+  async function handleSaveToCatalog() {
+    try {
+      await fetch('/api/catalog', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'My Progression',
+          type: 'chord-progression',
+          data: JSON.stringify(progression),
+        }),
+      })
+      toast.success('Saved to catalog!')
+    } catch {
+      toast.error('Failed to save to catalog')
+    }
+  }
+
   const accuracy = hits + misses > 0 ? Math.round((hits / (hits + misses)) * 100) : 0
 
+  // ── Immersive layout ─────────────────────────────────────────────────────────
+  if (immersive) {
+    return (
+      <div className="fixed inset-0 z-50 bg-gray-950 flex flex-col">
+        {/* Top HUD */}
+        <div className="flex items-center justify-between px-4 py-2 border-b border-gray-800">
+          <div className="flex items-center gap-3 text-sm">
+            <span className="text-yellow-400 font-bold text-lg">{score}</span>
+            <span className="text-green-400">✓ {hits}</span>
+            <span className="text-red-400">✗ {misses}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button size="icon" variant="ghost" className="text-gray-400 w-8 h-8"
+              onClick={() => setShowSettings(s => !s)}>
+              <Settings className="w-4 h-4" />
+            </Button>
+            <Button size="icon" variant="ghost" className="text-gray-400 w-8 h-8"
+              onClick={() => setImmersive(false)}>
+              <Minimize2 className="w-4 h-4" />
+            </Button>
+            <Button size="sm" variant="destructive" className="gap-1.5"
+              onClick={handleStop}>
+              <Square className="w-3.5 h-3.5" />
+              Stop
+            </Button>
+          </div>
+        </div>
+
+        {/* Settings drawer */}
+        {showSettings && (
+          <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-800">
+            <span className="text-xs text-gray-400">Mode:</span>
+            <button
+              className={`text-xs px-2 py-1 rounded ${mode === 'practice' ? 'bg-purple-600 text-white' : 'text-gray-400'}`}
+              onClick={() => setMode('practice')}
+            >Practice</button>
+            <button
+              className={`text-xs px-2 py-1 rounded ${mode === 'test' ? 'bg-purple-600 text-white' : 'text-gray-400'}`}
+              onClick={() => setMode('test')}
+            >Test</button>
+          </div>
+        )}
+
+        {/* Highway */}
+        <div className="flex-1 overflow-hidden p-2">
+          {stream && (
+            <ChordDetector stream={stream} onChordDetected={setCurrentMatch} />
+          )}
+          <ChordHighway
+            progression={progression}
+            bpm={bpm}
+            running={running}
+            currentMatch={currentMatch}
+            onScore={handleScore}
+            mode={mode}
+            immersive={true}
+          />
+        </div>
+
+        {/* Bottom HUD */}
+        <div className="border-t border-gray-800 px-4 py-2">
+          <Metronome bpm={bpm} onBpmChange={setBpm} running={running} />
+        </div>
+      </div>
+    )
+  }
+
+  // ── Normal layout ─────────────────────────────────────────────────────────────
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl">
       <div className="mb-6">
@@ -173,7 +272,7 @@ function PracticeContent() {
           <div className="flex gap-3">
             {!running ? (
               <Button
-                onClick={() => { handleReset(); setRunning(true) }}
+                onClick={handleStart}
                 className="gap-2 flex-1"
                 size="lg"
                 disabled={!stream}
@@ -195,12 +294,23 @@ function PracticeContent() {
             <Button variant="outline" onClick={handleReset} size="lg">
               <RotateCcw className="w-5 h-5" />
             </Button>
+            {running && (
+              <Button
+                variant="outline"
+                size="lg"
+                className="md:hidden"
+                onClick={() => setImmersive(true)}
+                title="Immersive fullscreen mode"
+              >
+                <Maximize2 className="w-5 h-5" />
+              </Button>
+            )}
           </div>
         </div>
 
         {/* Sidebar */}
         <div className="order-1 lg:order-2 space-y-4">
-          {/* Score — horizontal on mobile, vertical on desktop */}
+          {/* Score */}
           <Card>
             <CardContent className="p-4 sm:p-5">
               <div className="flex items-center justify-between lg:block lg:text-center gap-4">
@@ -242,6 +352,15 @@ function PracticeContent() {
                 onClick={useLearnedProgression}
               >
                 Use My Learned Chords
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full gap-2"
+                onClick={handleSaveToCatalog}
+              >
+                <BookmarkPlus className="w-4 h-4" />
+                Save to Catalog
               </Button>
             </CardContent>
           </Card>

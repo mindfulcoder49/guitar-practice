@@ -11,14 +11,21 @@ export async function POST(req: NextRequest) {
 
   const { messages } = await req.json()
 
-  // Get user's learned chords
-  const learnedChords = await prisma.learnedChord.findMany({
-    where: { userId: session.user.id },
-    select: { chordName: true },
-  })
+  // Get user's learned chords and songs
+  const [learnedChords, learnedSongs] = await Promise.all([
+    prisma.learnedChord.findMany({
+      where: { userId: session.user.id },
+      select: { chordName: true },
+    }),
+    prisma.learnedSong.findMany({
+      where: { userId: session.user.id },
+      select: { songId: true },
+    }),
+  ])
   const chordNames = learnedChords.map(c => c.chordName)
+  const songIds = learnedSongs.map(s => s.songId)
 
-  const systemPrompt = buildSystemPrompt(chordNames)
+  const systemPrompt = buildSystemPrompt(chordNames, songIds)
 
   const stream = await getOpenAI().chat.completions.create({
     model: 'gpt-4o',
