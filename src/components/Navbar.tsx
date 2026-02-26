@@ -64,9 +64,9 @@ export function Navbar({ userName }: { userName?: string | null }) {
         </div>
       </div>
 
-      {/* Mobile nav */}
-      <div className="md:hidden border-t">
-        <div className="flex overflow-x-auto">
+      {/* Mobile nav — fixed bottom tab bar */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur safe-area-bottom">
+        <div className="flex">
           {NAV_ITEMS.map(item => {
             const Icon = item.icon
             const active = pathname.startsWith(item.href)
@@ -74,12 +74,12 @@ export function Navbar({ userName }: { userName?: string | null }) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center gap-1 px-4 py-2 text-xs flex-shrink-0 transition-colors ${
-                  active ? 'text-purple-600 bg-purple-50' : 'text-muted-foreground'
+                className={`flex flex-col items-center justify-center gap-1 flex-1 py-2 text-xs min-h-[56px] transition-colors ${
+                  active ? 'text-purple-600' : 'text-muted-foreground'
                 }`}
               >
-                <Icon className="w-4 h-4" />
-                {item.label}
+                <Icon className="w-5 h-5" />
+                <span className="leading-none">{item.label}</span>
               </Link>
             )
           })}

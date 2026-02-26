@@ -8,18 +8,18 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
       {/* Hero */}
-      <div className="container mx-auto px-4 py-20 text-center">
+      <div className="container mx-auto px-4 py-12 sm:py-20 text-center">
         <Badge className="mb-4 bg-purple-500/20 text-purple-300 border-purple-500/30">
           AI-Powered Guitar Learning
         </Badge>
-        <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white to-purple-300 bg-clip-text text-transparent">
+        <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-white to-purple-300 bg-clip-text text-transparent">
           Guitar Practice
         </h1>
-        <p className="text-xl text-slate-300 mb-10 max-w-2xl mx-auto">
+        <p className="text-lg sm:text-xl text-slate-300 mb-8 sm:mb-10 max-w-2xl mx-auto">
           Learn chords with real-time microphone detection, Guitar Hero-style practice,
           and an AI assistant that creates custom progressions from your learned chords.
         </p>
-        <div className="flex gap-4 justify-center flex-wrap">
+        <div className="flex gap-3 sm:gap-4 justify-center flex-wrap">
           <Button asChild size="lg" className="bg-purple-600 hover:bg-purple-700 text-white">
             <Link href="/auth/register">Get Started Free</Link>
           </Button>
@@ -31,7 +31,7 @@ export default function Home() {
 
       {/* Features */}
       <div className="container mx-auto px-4 pb-20">
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {[
             {
               icon: <Guitar className="w-8 h-8 text-purple-400" />,
@@ -65,7 +65,7 @@ export default function Home() {
         </div>
 
         {/* Curriculum */}
-        <div className="mt-16 text-center">
+        <div className="mt-10 sm:mt-16 text-center">
           <h2 className="text-3xl font-bold mb-4">9-Chord Curriculum</h2>
           <p className="text-slate-400 mb-8">Progress from beginner chords to the challenging F barre chord</p>
           <div className="flex flex-wrap justify-center gap-3">

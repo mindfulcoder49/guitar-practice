@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import { Toaster } from '@/components/ui/sonner'
 import { MicrophoneProvider } from '@/contexts/MicrophoneContext'
+import { Heartbeat } from '@/components/Heartbeat'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -19,6 +20,11 @@ export const metadata: Metadata = {
   description: 'Learn guitar chords with AI-powered chord detection and practice modes',
 }
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -28,6 +34,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <MicrophoneProvider>
+          <Heartbeat />
           {children}
           <Toaster />
         </MicrophoneProvider>

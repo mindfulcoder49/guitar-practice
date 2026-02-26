@@ -111,16 +111,16 @@ function PracticeContent() {
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Zap className="w-8 h-8 text-yellow-500" />
+        <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
+          <Zap className="w-7 h-7 sm:w-8 sm:h-8 text-yellow-500" />
           Guitar Hero Mode
         </h1>
         <p className="text-muted-foreground">Hit chords as they scroll toward the line</p>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Main lane */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="lg:col-span-2 space-y-4 order-2 lg:order-1">
           <MicrophoneSetup onStream={setStream} />
 
           {stream && (
@@ -199,18 +199,25 @@ function PracticeContent() {
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-4">
-          {/* Score */}
+        <div className="order-1 lg:order-2 space-y-4">
+          {/* Score — horizontal on mobile, vertical on desktop */}
           <Card>
-            <CardContent className="p-5 text-center">
-              <p className="text-5xl font-bold text-primary">{score}</p>
-              <p className="text-muted-foreground text-sm">Score</p>
-              <div className="flex justify-center gap-4 mt-3 text-sm">
-                <span className="text-green-600 font-medium">✓ {hits} hits</span>
-                <span className="text-red-500 font-medium">✗ {misses} missed</span>
+            <CardContent className="p-4 sm:p-5">
+              <div className="flex items-center justify-between lg:block lg:text-center gap-4">
+                <div>
+                  <p className="text-4xl sm:text-5xl font-bold text-primary">{score}</p>
+                  <p className="text-muted-foreground text-sm">Score</p>
+                </div>
+                <div className="flex flex-col sm:flex-row lg:justify-center lg:flex-row gap-2 sm:gap-4 mt-0 lg:mt-3 text-sm">
+                  <span className="text-green-600 font-medium">✓ {hits} hits</span>
+                  <span className="text-red-500 font-medium">✗ {misses} missed</span>
+                </div>
+                {hits + misses > 0 && (
+                  <p className="text-xs text-muted-foreground lg:mt-1 hidden sm:block">{accuracy}% accuracy</p>
+                )}
               </div>
               {hits + misses > 0 && (
-                <p className="text-xs text-muted-foreground mt-1">{accuracy}% accuracy</p>
+                <p className="text-xs text-muted-foreground mt-1 sm:hidden text-center">{accuracy}% accuracy</p>
               )}
             </CardContent>
           </Card>

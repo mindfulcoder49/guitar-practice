@@ -111,7 +111,7 @@ export function Metronome({ bpm, onBpmChange, running, onTick }: MetronomeProps)
       {/* Mute toggle */}
       <button
         onClick={() => setMuted(m => !m)}
-        className={`flex-shrink-0 p-1.5 rounded-md transition-colors ${
+        className={`flex-shrink-0 p-2.5 rounded-md transition-colors touch-manipulation ${
           muted
             ? 'text-muted-foreground hover:text-foreground'
             : 'text-foreground hover:text-muted-foreground'

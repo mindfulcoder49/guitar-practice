@@ -98,7 +98,7 @@ export function ChatBot({ onLoadProgression }: ChatBotProps) {
 
           return (
             <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[80%] space-y-2`}>
+              <div className={`max-w-[88%] sm:max-w-[80%] space-y-2`}>
                 <div
                   className={`rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
                     msg.role === 'user'

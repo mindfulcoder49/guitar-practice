@@ -124,3 +124,15 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Account for fixed bottom nav on mobile */
+@media (max-width: 767px) {
+  body {
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Safe area inset for bottom nav on notched devices */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}

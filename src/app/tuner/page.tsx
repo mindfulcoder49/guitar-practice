@@ -16,8 +16,8 @@ export default function TunerPage() {
 
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Music2 className="w-8 h-8 text-blue-500" />
+          <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
+            <Music2 className="w-7 h-7 sm:w-8 sm:h-8 text-blue-500" />
             Guitar Tuner
           </h1>
           <p className="text-muted-foreground">
@@ -29,7 +29,7 @@ export default function TunerPage() {
           <MicrophoneSetup onStream={setStream} />
 
           <Card>
-            <CardContent className="p-8">
+            <CardContent className="p-4 sm:p-8">
               <Tuner stream={stream} />
             </CardContent>
           </Card>
@@ -39,7 +39,7 @@ export default function TunerPage() {
               <CardTitle className="text-sm font-medium text-muted-foreground">Standard Tuning Reference</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-6 gap-2 text-center">
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 text-center">
                 {[
                   { string: 6, note: 'E2', freq: '82.4 Hz', color: 'bg-red-100 text-red-700' },
                   { string: 5, note: 'A2', freq: '110 Hz', color: 'bg-orange-100 text-orange-700' },

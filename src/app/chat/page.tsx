@@ -34,8 +34,8 @@ export default function ChatPage() {
 
       <div className="container mx-auto px-4 py-6 max-w-3xl flex-1 flex flex-col">
         <div className="mb-4">
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <MessageSquare className="w-8 h-8 text-green-500" />
+          <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
+            <MessageSquare className="w-7 h-7 sm:w-8 sm:h-8 text-green-500" />
             AI Guitar Assistant
           </h1>
           <p className="text-muted-foreground">
@@ -60,7 +60,7 @@ export default function ChatPage() {
           )}
         </div>
 
-        <Card className="flex-1 flex flex-col overflow-hidden" style={{ minHeight: '500px' }}>
+        <Card className="flex-1 flex flex-col overflow-hidden min-h-[320px] sm:min-h-[500px]">
           <ChatBot onLoadProgression={handleLoadProgression} />
         </Card>
       </div>

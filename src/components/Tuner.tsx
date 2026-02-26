@@ -53,7 +53,7 @@ function TunerDisplay({ cents, note, octave, nearestString, active }: TunerDispl
     <div className="flex flex-col items-center gap-6">
       {/* Note display */}
       <div className="text-center">
-        <div className="text-7xl font-bold tracking-tight" style={{ color: active ? color : '#9ca3af' }}>
+        <div className="text-5xl sm:text-7xl font-bold tracking-tight" style={{ color: active ? color : '#9ca3af' }}>
           {active ? `${note}${octave}` : '—'}
         </div>
         <div className="text-sm text-muted-foreground mt-1">
@@ -62,7 +62,7 @@ function TunerDisplay({ cents, note, octave, nearestString, active }: TunerDispl
       </div>
 
       {/* Needle gauge */}
-      <div className="relative w-64 h-36">
+      <div className="relative w-full max-w-xs h-28 sm:h-36 mx-auto">
         <svg viewBox="0 0 200 110" className="w-full h-full">
           {/* Gauge arc */}
           <path
@@ -125,7 +125,7 @@ function TunerDisplay({ cents, note, octave, nearestString, active }: TunerDispl
       </div>
 
       {/* Guitar string indicators */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap justify-center gap-2">
         {GUITAR_STRINGS.slice().reverse().map(s => (
           <div
             key={s.string}
