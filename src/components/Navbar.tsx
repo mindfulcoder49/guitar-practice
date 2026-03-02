@@ -4,13 +4,14 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
-import { Guitar, BookOpen, Zap, MessageSquare, LayoutDashboard, LogOut, Music, Library } from 'lucide-react'
+import { Guitar, BookOpen, Zap, MessageSquare, LayoutDashboard, LogOut, Music, Library, Radio } from 'lucide-react'
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Home',     icon: LayoutDashboard },
   { href: '/learn',     label: 'Learn',    icon: BookOpen },
   { href: '/practice',  label: 'Practice', icon: Zap },
   { href: '/songs',     label: 'Songs',    icon: Music },
+  { href: '/tuner',     label: 'Tuner',    icon: Radio },
   { href: '/chat',      label: 'Chat',     icon: MessageSquare },
   { href: '/catalog',   label: 'Catalog',  icon: Library },
 ]

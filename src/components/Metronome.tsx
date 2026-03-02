@@ -98,7 +98,7 @@ export function Metronome({ bpm, onBpmChange, running, onTick }: MetronomeProps)
       {/* BPM slider */}
       <div className="flex-1 flex items-center gap-3">
         <Slider
-          min={40}
+          min={10}
           max={160}
           step={1}
           value={[bpm]}

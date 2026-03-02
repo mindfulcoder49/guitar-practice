@@ -365,8 +365,57 @@ export function getCurriculumChords(): ChordTemplate[] {
   return CURRICULUM_ORDER.map(name => CHORD_TEMPLATES[name]).filter(Boolean)
 }
 
+// MIDI note number for each open string (standard tuning, index 0 = low E)
+export const STRING_OPEN_MIDI = [40, 45, 50, 55, 59, 64] // E2 A2 D3 G3 B3 E4
+
+/**
+ * Returns the MIDI note played on each sounding string for a given chord.
+ * Uses openStrings[] as fret offsets: 0 = open, -1 = muted, >0 = fret number.
+ */
+export function getChordMidiNotes(chord: ChordTemplate): number[] {
+  const notes: number[] = []
+  for (let i = 0; i < 6; i++) {
+    const fret = chord.openStrings[i]
+    if (fret < 0) continue
+    notes.push(STRING_OPEN_MIDI[i] + fret)
+  }
+  return notes
+}
+
 export function getNextChord(currentChord: string): string | null {
   const idx = CURRICULUM_ORDER.indexOf(currentChord)
   if (idx === -1 || idx === CURRICULUM_ORDER.length - 1) return null
   return CURRICULUM_ORDER[idx + 1]
+}
+
+// Chord families: chords that are close enough to accept interchangeably in practice/learn modes.
+// If the student is asked to play Em7, playing Em (and vice versa) counts as correct.
+const CHORD_FAMILIES: Record<string, string[]> = {
+  Em:    ['Em',  'Em7'],
+  Em7:   ['Em',  'Em7'],
+  Am:    ['Am',  'Am7'],
+  Am7:   ['Am',  'Am7'],
+  E:     ['E',   'E7'],
+  E7:    ['E',   'E7'],
+  A:     ['A',   'A7'],
+  A7:    ['A',   'A7'],
+  D:     ['D',   'D7'],
+  D7:    ['D',   'D7'],
+  C:     ['C',   'Cmaj7'],
+  Cmaj7: ['C',   'Cmaj7'],
+  F:     ['F',   'Fmaj7'],
+  Fmaj7: ['F',   'Fmaj7'],
+  G:     ['G'],
+  Dm:    ['Dm'],
+  Bm:    ['Bm'],
+  B7:    ['B7'],
+}
+
+/**
+ * Returns true when `detected` is in the same chord family as `target`.
+ * Used to accept Em when the student is asked for Em7, etc.
+ */
+export function chordsInSameFamily(target: string, detected: string): boolean {
+  const family = CHORD_FAMILIES[target]
+  return family ? family.includes(detected) : target === detected
 }

@@ -11,7 +11,8 @@ const LANE_HEIGHT = 46           // taller lanes — easier to read
 const GEM_W      = 30
 const GEM_H      = 34            // fills most of the lane height
 const HIT_LINE_PCT      = 18
-const HIGHWAY_DURATION_MS = 4000
+const BASE_HIGHWAY_DURATION_MS = 4000   // duration at BASE_BPM
+const BASE_BPM                 = 60     // reference BPM for scroll speed
 const HIT_WINDOW_EARLY  = 150
 const HIT_WINDOW_LATE   = 450
 const MIN_HIT_GAP_MS    = 150
@@ -179,19 +180,21 @@ export function NoteHighway({
   const [, setFrame]                  = useState(0)
   const [pausedBlock, setPausedBlock] = useState<NoteBlock | null>(null)
 
-  const startTimeRef      = useRef<number>(0)
-  const animRef           = useRef<number | undefined>(undefined)
-  const matchRef          = useRef<NoteMatch | null>(null)
-  const blocksRef         = useRef<NoteBlock[]>([])
-  const pausedBlockRef    = useRef<NoteBlock | null>(null)
-  const pausedGameTimeRef = useRef<number | undefined>(undefined)
-  const pendingRetryIdRef = useRef<string | null>(null)
-  const modeRef           = useRef(mode)
-  const lastHitTimeRef    = useRef<number>(0)
+  const startTimeRef         = useRef<number>(0)
+  const animRef              = useRef<number | undefined>(undefined)
+  const matchRef             = useRef<NoteMatch | null>(null)
+  const blocksRef            = useRef<NoteBlock[]>([])
+  const pausedBlockRef       = useRef<NoteBlock | null>(null)
+  const pausedGameTimeRef    = useRef<number | undefined>(undefined)
+  const pendingRetryIdRef    = useRef<string | null>(null)
+  const modeRef              = useRef(mode)
+  const lastHitTimeRef       = useRef<number>(0)
+  const effectiveDurationRef = useRef(BASE_HIGHWAY_DURATION_MS)
 
-  matchRef.current       = currentNoteMatch
-  pausedBlockRef.current = pausedBlock
-  modeRef.current        = mode
+  matchRef.current             = currentNoteMatch
+  pausedBlockRef.current       = pausedBlock
+  modeRef.current              = mode
+  effectiveDurationRef.current = BASE_HIGHWAY_DURATION_MS * (BASE_BPM / bpm)
 
   function getGameTime(): number {
     if (pausedGameTimeRef.current !== undefined) return pausedGameTimeRef.current
@@ -207,6 +210,7 @@ export function NoteHighway({
     }
 
     const beatMs = (60 / bpm) * 1000
+    const effectiveDuration = BASE_HIGHWAY_DURATION_MS * (BASE_BPM / bpm)
     startTimeRef.current = performance.now()
 
     setPausedBlock(null)
@@ -230,7 +234,7 @@ export function NoteHighway({
             string:    evt.string as 1|2|3|4|5|6,
             fret:      evt.fret,
             duration:  evt.duration,
-            startTime: elapsed + HIGHWAY_DURATION_MS,
+            startTime: elapsed + effectiveDuration,
           })
           elapsed += evt.duration * beatMs
         }
@@ -244,7 +248,7 @@ export function NoteHighway({
             string:    step.string,
             fret:      -1,
             duration:  step.duration,
-            startTime: elapsed + HIGHWAY_DURATION_MS,
+            startTime: elapsed + effectiveDuration,
           })
           elapsed += step.duration * beatMs
         }
@@ -510,7 +514,7 @@ export function NoteHighway({
               if (block.missed || block.hit) return null
 
               const timeToHit = block.startTime - gameTimeNow
-              const xPct      = HIT_LINE_PCT + (timeToHit / HIGHWAY_DURATION_MS) * (100 - HIT_LINE_PCT)
+              const xPct      = HIT_LINE_PCT + (timeToHit / effectiveDurationRef.current) * (100 - HIT_LINE_PCT)
 
               if (xPct > 108 || xPct < -10) return null
 

@@ -14,32 +14,41 @@ interface ChatBotProps {
   onLoadProgression?: (progression: ProgressionChord[]) => void
 }
 
+/**
+ * Pull the first JSON value out of a message, whether it's wrapped in a
+ * ```json … ``` fence or returned as bare JSON.
+ */
+function extractJson(text: string): unknown | null {
+  // 1. Prefer an explicit code fence
+  const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/)
+  if (fenceMatch) {
+    try { return JSON.parse(fenceMatch[1]) } catch {}
+  }
+  // 2. Fall back: find the outermost { … } or [ … ] block
+  const objMatch = text.match(/(\{[\s\S]*\}|\[[\s\S]*\])/)
+  if (objMatch) {
+    try { return JSON.parse(objMatch[1]) } catch {}
+  }
+  return null
+}
+
 function parseProgressionFromText(text: string): ProgressionChord[] | null {
-  const match = text.match(/```json\s*([\s\S]*?)```/)
-  if (!match) return null
-  try {
-    const parsed = JSON.parse(match[1])
-    if (Array.isArray(parsed) && parsed.every(p => p.chord && p.beats)) {
-      return parsed as ProgressionChord[]
-    }
-  } catch {}
+  const parsed = extractJson(text)
+  if (Array.isArray(parsed) && parsed.every((p: unknown) =>
+    p != null && typeof p === 'object' && 'chord' in (p as object) && 'beats' in (p as object)
+  )) {
+    return parsed as ProgressionChord[]
+  }
   return null
 }
 
 function parseSongFromText(text: string): AISong | null {
-  const match = text.match(/```json\s*([\s\S]*?)```/)
-  if (!match) return null
-  try {
-    const parsed = JSON.parse(match[1])
-    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      if (parsed.type === 'melody' && Array.isArray(parsed.notes)) {
-        return parsed as AISong
-      }
-      if (parsed.type === 'fingerpick' && Array.isArray(parsed.sequence)) {
-        return parsed as AISong
-      }
-    }
-  } catch {}
+  const parsed = extractJson(text)
+  if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+    const p = parsed as Record<string, unknown>
+    if (p.type === 'melody' && Array.isArray(p.notes)) return parsed as AISong
+    if (p.type === 'fingerpick' && Array.isArray(p.sequence)) return parsed as AISong
+  }
   return null
 }
 
@@ -162,7 +171,13 @@ export function ChatBot({ onLoadProgression }: ChatBotProps) {
         {messages.map((msg, i) => {
           const progression = msg.role === 'assistant' ? parseProgressionFromText(msg.content) : null
           const aiSong      = msg.role === 'assistant' && !progression ? parseSongFromText(msg.content) : null
-          const displayContent = msg.content.replace(/```json[\s\S]*?```/g, '').trim()
+          // Strip fenced JSON blocks; also strip a bare top-level { … } or [ … ]
+          // block when the AI skips the code fence, so raw JSON never leaks into the bubble.
+          const hasJson = !!(progression || aiSong)
+          const displayContent = msg.content
+            .replace(/```(?:json)?\s*[\s\S]*?```/g, '')
+            .replace(hasJson ? /(\{[\s\S]*\}|\[[\s\S]*\])/g : /(?!x)x/, '')
+            .trim()
 
           return (
             <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>

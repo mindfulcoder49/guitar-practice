@@ -7,6 +7,10 @@ import { MicrophoneSetup } from './MicrophoneSetup'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { ChordTemplate, ChordMatch } from '@/types'
+import { chordsInSameFamily } from '@/lib/chords'
+import { scoreChordFromSalience } from '@/lib/chordDetection'
+
+const TARGETED_THRESHOLD = 0.28
 import { CheckCircle, ChevronRight } from 'lucide-react'
 
 interface FlashcardModeProps {
@@ -35,11 +39,17 @@ export function FlashcardMode({ chord, onNext, onComplete, hasNext }: FlashcardM
   const confirmedRef = useRef(false)
 
   // Keep a ref in sync with state so the rAF closure always sees the latest value
-  const matchRef = useRef<ChordMatch | null>(null)
-  matchRef.current = currentMatch
+  const matchRef     = useRef<ChordMatch | null>(null)
+  const salienceRef  = useRef<number[]>([])
+  matchRef.current   = currentMatch
 
-  const isCorrectDetection = useCallback((m: ChordMatch | null) =>
-    m?.chord === chord.name, [chord.name])
+  const isCorrectDetection = useCallback((_m: ChordMatch | null) => {
+    // Targeted: check if the actual chord's salience score clears the threshold.
+    // Fall back to blind family match so it still works if salience is empty.
+    const targeted = scoreChordFromSalience(salienceRef.current, chord.name) >= TARGETED_THRESHOLD
+    const blind    = _m != null && chordsInSameFamily(chord.name, _m.chord)
+    return targeted || blind
+  }, [chord.name])
 
   // Reset everything when the chord changes
   useEffect(() => {
@@ -108,6 +118,7 @@ export function FlashcardMode({ chord, onNext, onComplete, hasNext }: FlashcardM
           stream={stream}
           targetChord={chord.name}
           onChordDetected={setCurrentMatch}
+          onSalience={s => { salienceRef.current = s }}
         />
       )}
 

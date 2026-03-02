@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type RefObject } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChordMatch, ProgressionChord } from '@/types'
-import { CHORD_TEMPLATES } from '@/lib/chords'
+import { CHORD_TEMPLATES, chordsInSameFamily } from '@/lib/chords'
+import { scoreChordFromSalience } from '@/lib/chordDetection'
 
 // ─── Highway constants ────────────────────────────────────────────────────────
 
@@ -11,7 +12,8 @@ const LANE_HEIGHT = 34
 const GEM_W = 44
 const GEM_H = 26
 const HIT_LINE_PCT = 18
-const HIGHWAY_DURATION_MS = 4000
+const BASE_HIGHWAY_DURATION_MS = 4000   // duration at BASE_BPM
+const BASE_BPM                 = 60     // reference BPM for scroll speed
 const HIT_WINDOW_MS = 1200
 
 // One colour per string: index 0 = Low E, index 5 = High e
@@ -48,11 +50,17 @@ interface ChordBlock {
   pendingRetry?: boolean   // practice mode: missed, waiting for student to play it
 }
 
+// Minimum targeted Dice score to count as playing the right chord.
+// Lower than the blind-detection threshold because we're not competing against
+// all other chords — we just need enough signal that the right chord is there.
+const TARGETED_THRESHOLD = 0.28
+
 interface ChordHighwayProps {
   progression: ProgressionChord[]
   bpm: number
   running: boolean
   currentMatch: ChordMatch | null
+  salienceRef?: RefObject<number[]>
   onScore: (hit: boolean, chord: string) => void
   mode?: 'practice' | 'test'
   immersive?: boolean
@@ -286,7 +294,8 @@ function GemColumn({ chordName, flash }: {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function ChordHighway({
-  progression, bpm, running, currentMatch, onScore, mode = 'test', immersive = false,
+  progression, bpm, running, currentMatch, salienceRef,
+  onScore, mode = 'test', immersive = false,
 }: ChordHighwayProps) {
 
   const [blocks, setBlocks]         = useState<ChordBlock[]>([])
@@ -302,11 +311,15 @@ export function ChordHighway({
   const pausedGameTimeRef  = useRef<number | undefined>(undefined)
   const pendingRetryIdRef  = useRef<string | null>(null)
   const modeRef            = useRef(mode)
+  // Scroll speed: travel time for a block to cross the full highway width.
+  // Scales inversely with BPM so visual note density stays constant.
+  const effectiveDurationRef = useRef(BASE_HIGHWAY_DURATION_MS)
 
   // Keep refs in sync with the latest props/state
-  matchRef.current     = currentMatch
-  pausedChordRef.current = pausedChord
-  modeRef.current      = mode
+  matchRef.current           = currentMatch
+  pausedChordRef.current     = pausedChord
+  modeRef.current            = mode
+  effectiveDurationRef.current = BASE_HIGHWAY_DURATION_MS * (BASE_BPM / bpm)
 
   /** Returns current game-time in ms, or the frozen value when paused. */
   function getGameTime(): number {
@@ -323,6 +336,7 @@ export function ChordHighway({
     }
 
     const beatMs = (60 / bpm) * 1000
+    const effectiveDuration = BASE_HIGHWAY_DURATION_MS * (BASE_BPM / bpm)
     startTimeRef.current = performance.now()
 
     // Reset pause state on new session
@@ -339,7 +353,7 @@ export function ChordHighway({
           id:        `${loop}-${item.chord}-${elapsed}`,
           chord:     item.chord,
           beats:     item.beats,
-          startTime: elapsed + HIGHWAY_DURATION_MS,
+          startTime: elapsed + effectiveDuration,
         })
         elapsed += item.beats * beatMs
       }
@@ -365,7 +379,9 @@ export function ChordHighway({
 
       // ── Paused (practice mode): waiting for student to play the right chord ──
       if (pausedChordRef.current !== null) {
-        if (match?.chord === pausedChordRef.current) {
+        const targetedHit = scoreChordFromSalience(salienceRef?.current ?? [], pausedChordRef.current) >= TARGETED_THRESHOLD
+        const blindHit    = match?.chord != null && chordsInSameFamily(pausedChordRef.current, match.chord)
+        if (targetedHit || blindHit) {
           // Student got it — resume
           const frozenTime = pausedGameTimeRef.current!
           startTimeRef.current       = performance.now() - frozenTime
@@ -396,7 +412,9 @@ export function ChordHighway({
         const timeToHit = block.startTime - gameTime
         const inWindow  = timeToHit > -HIT_WINDOW_MS && timeToHit < HIT_WINDOW_MS
 
-        if (inWindow && match?.chord === block.chord) {
+        const targetedHit = scoreChordFromSalience(salienceRef?.current ?? [], block.chord) >= TARGETED_THRESHOLD
+        const blindHit    = match?.chord != null && chordsInSameFamily(block.chord, match.chord)
+        if (inWindow && (targetedHit || blindHit)) {
           onScore(true, block.chord)
           return { ...block, hit: true }
         }
@@ -578,7 +596,7 @@ export function ChordHighway({
               if (block.missed || block.hit) return null
 
               const timeToHit = block.startTime - gameTimeNow
-              const xPct      = HIT_LINE_PCT + (timeToHit / HIGHWAY_DURATION_MS) * (100 - HIT_LINE_PCT)
+              const xPct      = HIT_LINE_PCT + (timeToHit / effectiveDurationRef.current) * (100 - HIT_LINE_PCT)
 
               if (xPct > 108 || xPct < -10) return null
 

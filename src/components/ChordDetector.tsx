@@ -1,87 +1,145 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { ChromagramSmoother, matchChord } from '@/lib/chordDetection'
+import {
+  NoteSalienceSmoother, ChromagramSmoother,
+  buildNoteSalience, matchChordFromSalience,
+  SALIENCE_SIZE,
+} from '@/lib/chordDetection'
 import { ChordMatch } from '@/types'
 
-// Number of Meyda frames to collect for noise calibration.
-// At bufferSize=4096 / sampleRate=44100 ≈ 10.8 frames/sec → ~25 frames ≈ 2.3 s
-const CALIBRATION_FRAMES = 25
+// Attack detection — only register a chord when a strum onset is detected.
+// ATTACK_RATIO: current RMS must be this many times the slow-moving average to
+//               count as a strum (guards against steady background noise).
+// MIN_ATTACK_RMS: absolute floor — tiny signals can't trigger even if they spike.
+// LOCK_MS: how long chord detection stays active after a strum attack.
+// SLOW_RMS_ALPHA: EMA decay per Meyda frame (~1 s time-constant at 10 fps).
+const ATTACK_RATIO   = 1.8
+const MIN_ATTACK_RMS = 0.003
+const LOCK_MS        = 600
+const SLOW_RMS_ALPHA = 0.97
 
-interface CalibrationState {
-  calibrating: boolean
-  calibrated: boolean
-  recalibrate: () => void
+// Chroma concentration gate — white noise spreads energy evenly across all 12
+// pitch classes. A guitar chord uses up to 6 strings, so up to 6 distinct pitch
+// classes. We measure what fraction of total chroma energy lives in the top 6 bins.
+// White noise ≈ 0.50 (6/12 equal bins). A chord concentrates energy in those 6
+// bins and leaves the other 6 near zero, so it typically scores 0.70+.
+const CHROMA_CONCENTRATION_THRESHOLD = 0.65
+
+/** Returns the fraction of total chroma energy in the top 6 bins (0–1). */
+function chromaConcentration(chroma: number[]): number {
+  const total = chroma.reduce((a, b) => a + b, 0)
+  if (total === 0) return 0
+  const sorted = [...chroma].sort((a, b) => b - a)
+  return (sorted[0] + sorted[1] + sorted[2] + sorted[3] + sorted[4] + sorted[5]) / total
 }
+
+const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
 
 interface ChordDetectorProps {
   stream: MediaStream | null
   targetChord?: string
   onChordDetected?: (match: ChordMatch | null) => void
-  children?: (match: ChordMatch | null, cal?: CalibrationState) => React.ReactNode
+  /** Called every audio frame with the smoothed salience vector.
+   *  Use scoreChordFromSalience() on this for targeted hit detection. */
+  onSalience?: (salience: number[]) => void
+  showDebug?: boolean
+  children?: (match: ChordMatch | null) => React.ReactNode
 }
 
-export function ChordDetector({ stream, targetChord, onChordDetected, children }: ChordDetectorProps) {
-  const [currentMatch, setCurrentMatch] = useState<ChordMatch | null>(null)
-  const [calibrating, setCalibrating]   = useState(false)
-  const [calibrated, setCalibrated]     = useState(false)
+export function ChordDetector({ stream, targetChord, onChordDetected, onSalience, showDebug, children }: ChordDetectorProps) {
+  const [currentMatch, setCurrentMatch]   = useState<ChordMatch | null>(null)
+  const [debugChroma, setDebugChroma]     = useState<number[] | null>(null)
+  const [attackGate, setAttackGate]       = useState(true)
+  const attackGateRef                     = useRef(true)
+  const [chromaFlat, setChromaFlat]       = useState(false)  // true when signal is too noise-like
 
-  const meydaRef       = useRef<unknown>(null)
-  const smootherRef    = useRef(new ChromagramSmoother())
-  const audioCtxRef    = useRef<AudioContext | null>(null)
-  const noiseFloorRef  = useRef<number[]>(new Array(12).fill(0))
-  const calibFramesRef = useRef<number[][]>([])
-  const calibratingRef = useRef(false)   // ref copy so the Meyda callback can read it
+  const meydaRef          = useRef<unknown>(null)
+  const smootherRef       = useRef(new NoteSalienceSmoother())
+  const chromaSmootherRef = useRef(new ChromagramSmoother())
+  const audioCtxRef       = useRef<AudioContext | null>(null)
+  const sampleRateRef     = useRef<number>(44100)
+  const bufferSize        = 4096
 
-  // Kick off a fresh 2-second noise sample
-  const startCalibration = useCallback(() => {
-    calibFramesRef.current = []
-    calibratingRef.current = true
-    setCalibrated(false)
-    setCalibrating(true)
-    setCurrentMatch(null)
-    smootherRef.current.reset()
-  }, [])
+  // Attack detection state
+  const slowRmsRef    = useRef<number>(0.001)
+  const lastAttackRef = useRef<number>(-Infinity)
+  const hasMatchRef   = useRef<boolean>(false)
 
-  const handleChroma = useCallback((chroma: number[]) => {
-    if (calibratingRef.current) {
-      // Accumulate noise frames
-      calibFramesRef.current.push(chroma)
+  attackGateRef.current = attackGate
 
-      if (calibFramesRef.current.length >= CALIBRATION_FRAMES) {
-        // Compute per-pitch-class average as the noise floor
-        const floor = new Array(12).fill(0)
-        for (const frame of calibFramesRef.current) {
-          for (let i = 0; i < 12; i++) floor[i] += frame[i]
+  const handleFeatures = useCallback((
+    ampSpectrum: number[] | Float32Array,
+    rms: number,
+    chroma: number[],
+  ) => {
+    // ── Update slow-RMS baseline ────────────────────────────────────────────
+    slowRmsRef.current =
+      SLOW_RMS_ALPHA * slowRmsRef.current + (1 - SLOW_RMS_ALPHA) * rms
+
+    // ── Detect strum attack ─────────────────────────────────────────────────
+    const isAttack = rms >= MIN_ATTACK_RMS && rms >= slowRmsRef.current * ATTACK_RATIO
+
+    if (isAttack) {
+      smootherRef.current.reset()
+      chromaSmootherRef.current.reset()
+      lastAttackRef.current = performance.now()
+    }
+
+    // ── Only detect chord within the lock window (skipped when gate is off) ─
+    if (attackGateRef.current) {
+      const timeSinceAttack = performance.now() - lastAttackRef.current
+      if (timeSinceAttack > LOCK_MS) {
+        if (hasMatchRef.current) {
+          hasMatchRef.current = false
+          setCurrentMatch(null)
+          onChordDetected?.(null)
+          onSalience?.(new Array(SALIENCE_SIZE).fill(0))
         }
-        noiseFloorRef.current = floor.map(v => v / calibFramesRef.current.length)
-        calibFramesRef.current  = []
-        calibratingRef.current  = false
-        setCalibrating(false)
-        setCalibrated(true)
+        return
       }
-      // Don't run detection during calibration
+    }
+
+    // ── Debug chroma display ─────────────────────────────────────────────────
+    if (showDebug) {
+      chromaSmootherRef.current.push(chroma)
+      setDebugChroma([...chroma])
+    }
+
+    // ── Chroma concentration gate — reject flat/noise-like signals ────────────
+    const concentration = chromaConcentration(chroma)
+    const isChordLike   = concentration >= CHROMA_CONCENTRATION_THRESHOLD
+    setChromaFlat(!isChordLike)
+
+    if (!isChordLike) {
+      if (hasMatchRef.current) {
+        hasMatchRef.current = false
+        setCurrentMatch(null)
+        onChordDetected?.(null)
+        onSalience?.(new Array(SALIENCE_SIZE).fill(0))
+      }
       return
     }
 
-    // Subtract noise floor — clamp to 0 so values stay non-negative
-    const denoised = chroma.map((v, i) => Math.max(0, v - noiseFloorRef.current[i]))
+    // ── Note-salience detection ───────────────────────────────────────────────
+    const salience = buildNoteSalience(ampSpectrum, sampleRateRef.current, bufferSize)
+    const smoothed = smootherRef.current.push(salience)
 
-    const smoothed = smootherRef.current.push(denoised)
-    const match    = matchChord(smoothed)
+    // Always broadcast salience so consumers can do targeted scoring
+    onSalience?.(smoothed)
+    const match    = matchChordFromSalience(smoothed)
+    hasMatchRef.current = match !== null
     setCurrentMatch(match)
     onChordDetected?.(match)
-  }, [onChordDetected])
+  }, [onChordDetected, onSalience, showDebug])
 
   useEffect(() => {
     if (!stream) {
-      setCalibrating(false)
-      setCalibrated(false)
-      noiseFloorRef.current = new Array(12).fill(0)
+      slowRmsRef.current    = 0.001
+      lastAttackRef.current = -Infinity
+      hasMatchRef.current   = false
       return
     }
-
-    let analyzer: unknown = null
 
     async function setup() {
       const Meyda = (await import('meyda')).default
@@ -89,21 +147,29 @@ export function ChordDetector({ stream, targetChord, onChordDetected, children }
       audioCtxRef.current = ctx
       const source = ctx.createMediaStreamSource(stream!)
 
-      analyzer = Meyda.createMeydaAnalyzer({
+      sampleRateRef.current = ctx.sampleRate
+
+      const analyzer = Meyda.createMeydaAnalyzer({
         audioContext: ctx,
         source,
-        bufferSize: 4096,
-        featureExtractors: ['chroma'],
-        callback: (features: { chroma?: number[] }) => {
-          if (features?.chroma) handleChroma(features.chroma)
+        bufferSize: bufferSize,
+        featureExtractors: ['amplitudeSpectrum', 'chroma', 'rms'],
+        callback: (features: {
+          amplitudeSpectrum?: Float32Array
+          chroma?: number[]
+          rms?: number
+        }) => {
+          if (features?.amplitudeSpectrum && features?.chroma) {
+            handleFeatures(
+              features.amplitudeSpectrum,
+              features.rms ?? 0,
+              features.chroma,
+            )
+          }
         },
       })
       ;(analyzer as { start: () => void }).start()
       meydaRef.current = analyzer
-
-      // Auto-calibrate as soon as the mic opens — captures whatever background
-      // noise is present (space heaters, fans, hum, etc.)
-      startCalibration()
     }
 
     setup()
@@ -115,14 +181,12 @@ export function ChordDetector({ stream, targetChord, onChordDetected, children }
       }
       audioCtxRef.current?.close()
       smootherRef.current.reset()
-      calibratingRef.current = false
+      chromaSmootherRef.current.reset()
     }
-  }, [stream, handleChroma, startCalibration])
-
-  const calState: CalibrationState = { calibrating, calibrated, recalibrate: startCalibration }
+  }, [stream, handleFeatures])
 
   // ── Custom render prop ──────────────────────────────────────────────────────
-  if (children) return <>{children(currentMatch, calState)}</>
+  if (children) return <>{children(currentMatch)}</>
 
   // ── Default render ──────────────────────────────────────────────────────────
   const confidence = currentMatch?.confidence ?? 0
@@ -133,7 +197,7 @@ export function ChordDetector({ stream, targetChord, onChordDetected, children }
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-muted-foreground">Detected Chord</span>
         <span className={`text-2xl font-bold ${isTarget ? 'text-green-500' : 'text-foreground'}`}>
-          {calibrating ? '…' : (currentMatch?.chord ?? '—')}
+          {currentMatch?.chord ?? '—'}
         </span>
       </div>
 
@@ -150,24 +214,51 @@ export function ChordDetector({ stream, targetChord, onChordDetected, children }
         </div>
       </div>
 
-      {/* Noise calibration status */}
-      <div className="flex items-center justify-between text-xs">
-        {calibrating ? (
-          <span className="text-yellow-500 animate-pulse">Sampling background noise… stay quiet</span>
-        ) : calibrated ? (
-          <span className="text-green-600">Noise reduced ✓</span>
-        ) : (
-          <span className="text-muted-foreground">No calibration</span>
-        )}
-        {!calibrating && (
-          <button
-            onClick={startCalibration}
-            className="text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
-          >
-            {calibrated ? 'Recalibrate' : 'Calibrate noise'}
-          </button>
-        )}
+      {/* Signal quality indicator */}
+      <div className="text-xs text-center">
+        {chromaFlat
+          ? <span className="text-muted-foreground">Listening…</span>
+          : <span className="text-green-600">Chord detected ✓</span>
+        }
       </div>
+
+      {/* Attack-gate toggle */}
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-muted-foreground">
+          Attack gate: <span className={attackGate ? 'text-green-600' : 'text-yellow-500'}>{attackGate ? 'on' : 'off (continuous)'}</span>
+        </span>
+        <button
+          onClick={() => setAttackGate(v => !v)}
+          className="text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
+        >
+          {attackGate ? 'Disable' : 'Enable'}
+        </button>
+      </div>
+
+      {/* Live chroma debug panel */}
+      {showDebug && debugChroma && (
+        <div className="pt-2 border-t space-y-2">
+          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+            Live chroma
+          </p>
+          <div className="flex items-end gap-[3px] h-16">
+            {NOTE_NAMES.map((name, i) => {
+              const val = debugChroma[i] ?? 0
+              const h   = Math.round(val * 60)
+              return (
+                <div key={name} className="flex flex-col items-center gap-[2px] flex-1">
+                  <div style={{ height: 52, display: 'flex', alignItems: 'flex-end' }}>
+                    <div
+                      style={{ height: Math.max(h, 2), width: '80%', background: '#a855f7', borderRadius: 2 }}
+                    />
+                  </div>
+                  <span className="text-[8px] text-muted-foreground leading-none">{name}</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState, useEffect, useCallback } from 'react'
+import { Suspense, useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Navbar } from '@/components/Navbar'
 import { ChordHighway } from '@/components/ChordHighway'
@@ -36,6 +36,8 @@ function PracticeContent() {
   const [mode, setMode] = useState<'practice' | 'test'>('practice')
   const [immersive, setImmersive] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [showChromaDebug, setShowChromaDebug] = useState(false)
+  const salienceRef = useRef<number[]>([])
 
   // Load AI progression from URL if present
   useEffect(() => {
@@ -185,7 +187,11 @@ function PracticeContent() {
         {/* Highway */}
         <div className="flex-1 overflow-hidden p-2">
           {stream && (
-            <ChordDetector stream={stream} onChordDetected={setCurrentMatch} />
+            <ChordDetector
+              stream={stream}
+              onChordDetected={setCurrentMatch}
+              onSalience={s => { salienceRef.current = s }}
+            />
           )}
           <ChordHighway
             progression={progression}
@@ -195,6 +201,7 @@ function PracticeContent() {
             onScore={handleScore}
             mode={mode}
             immersive={true}
+            salienceRef={salienceRef}
           />
         </div>
 
@@ -223,10 +230,20 @@ function PracticeContent() {
           <MicrophoneSetup onStream={setStream} />
 
           {stream && (
-            <ChordDetector
-              stream={stream}
-              onChordDetected={setCurrentMatch}
-            />
+            <div className="space-y-1">
+              <ChordDetector
+                stream={stream}
+                onChordDetected={setCurrentMatch}
+                onSalience={s => { salienceRef.current = s }}
+                showDebug={showChromaDebug}
+              />
+              <button
+                onClick={() => setShowChromaDebug(v => !v)}
+                className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
+              >
+                {showChromaDebug ? 'Hide chroma debug' : 'Show chroma debug'}
+              </button>
+            </div>
           )}
 
           <ChordHighway
@@ -236,6 +253,7 @@ function PracticeContent() {
             currentMatch={currentMatch}
             onScore={handleScore}
             mode={mode}
+            salienceRef={salienceRef}
           />
 
           <Metronome
