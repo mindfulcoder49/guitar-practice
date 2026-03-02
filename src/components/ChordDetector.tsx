@@ -2,18 +2,13 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import {
-  NoteSalienceSmoother, ChromagramSmoother,
+  NoteSalienceSmoother,
   buildNoteSalience, matchChordFromSalience,
   SALIENCE_SIZE,
 } from '@/lib/chordDetection'
 import { ChordMatch } from '@/types'
 
 // Attack detection — only register a chord when a strum onset is detected.
-// ATTACK_RATIO: current RMS must be this many times the slow-moving average to
-//               count as a strum (guards against steady background noise).
-// MIN_ATTACK_RMS: absolute floor — tiny signals can't trigger even if they spike.
-// LOCK_MS: how long chord detection stays active after a strum attack.
-// SLOW_RMS_ALPHA: EMA decay per Meyda frame (~1 s time-constant at 10 fps).
 const ATTACK_RATIO   = 1.8
 const MIN_ATTACK_RMS = 0.003
 const LOCK_MS        = 2000
@@ -34,8 +29,6 @@ function chromaConcentration(chroma: number[]): number {
   return (sorted[0] + sorted[1] + sorted[2] + sorted[3] + sorted[4] + sorted[5]) / total
 }
 
-const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
-
 interface ChordDetectorProps {
   stream: MediaStream | null
   targetChord?: string
@@ -43,25 +36,21 @@ interface ChordDetectorProps {
   /** Called every audio frame with the smoothed salience vector.
    *  Use scoreChordFromSalience() on this for targeted hit detection. */
   onSalience?: (salience: number[]) => void
-  showDebug?: boolean
   children?: (match: ChordMatch | null) => React.ReactNode
 }
 
-export function ChordDetector({ stream, targetChord, onChordDetected, onSalience, showDebug, children }: ChordDetectorProps) {
-  const [currentMatch, setCurrentMatch]   = useState<ChordMatch | null>(null)
-  const [debugChroma, setDebugChroma]     = useState<number[] | null>(null)
-  const [attackGate, setAttackGate]       = useState(true)
-  const attackGateRef                     = useRef(true)
-  const [chromaFlat, setChromaFlat]       = useState(false)  // true when signal is too noise-like
+export function ChordDetector({ stream, targetChord, onChordDetected, onSalience, children }: ChordDetectorProps) {
+  const [currentMatch, setCurrentMatch] = useState<ChordMatch | null>(null)
+  const [attackGate, setAttackGate]     = useState(true)
+  const attackGateRef                   = useRef(true)
+  const [chromaFlat, setChromaFlat]     = useState(false)
 
-  const meydaRef          = useRef<unknown>(null)
-  const smootherRef       = useRef(new NoteSalienceSmoother())
-  const chromaSmootherRef = useRef(new ChromagramSmoother())
-  const audioCtxRef       = useRef<AudioContext | null>(null)
-  const sampleRateRef     = useRef<number>(44100)
-  const bufferSize        = 4096
+  const meydaRef      = useRef<unknown>(null)
+  const smootherRef   = useRef(new NoteSalienceSmoother())
+  const audioCtxRef   = useRef<AudioContext | null>(null)
+  const sampleRateRef = useRef<number>(44100)
+  const bufferSize    = 4096
 
-  // Attack detection state
   const slowRmsRef    = useRef<number>(0.001)
   const lastAttackRef = useRef<number>(-Infinity)
   const hasMatchRef   = useRef<boolean>(false)
@@ -82,7 +71,6 @@ export function ChordDetector({ stream, targetChord, onChordDetected, onSalience
 
     if (isAttack) {
       smootherRef.current.reset()
-      chromaSmootherRef.current.reset()
       lastAttackRef.current = performance.now()
     }
 
@@ -98,12 +86,6 @@ export function ChordDetector({ stream, targetChord, onChordDetected, onSalience
         }
         return
       }
-    }
-
-    // ── Debug chroma display ─────────────────────────────────────────────────
-    if (showDebug) {
-      chromaSmootherRef.current.push(chroma)
-      setDebugChroma([...chroma])
     }
 
     // ── Chroma concentration gate — reject flat/noise-like signals ────────────
@@ -125,13 +107,12 @@ export function ChordDetector({ stream, targetChord, onChordDetected, onSalience
     const salience = buildNoteSalience(ampSpectrum, sampleRateRef.current, bufferSize)
     const smoothed = smootherRef.current.push(salience)
 
-    // Always broadcast salience so consumers can do targeted scoring
     onSalience?.(smoothed)
     const match    = matchChordFromSalience(smoothed)
     hasMatchRef.current = match !== null
     setCurrentMatch(match)
     onChordDetected?.(match)
-  }, [onChordDetected, onSalience, showDebug])
+  }, [onChordDetected, onSalience])
 
   useEffect(() => {
     if (!stream) {
@@ -181,7 +162,6 @@ export function ChordDetector({ stream, targetChord, onChordDetected, onSalience
       }
       audioCtxRef.current?.close()
       smootherRef.current.reset()
-      chromaSmootherRef.current.reset()
     }
   }, [stream, handleFeatures])
 
@@ -234,31 +214,6 @@ export function ChordDetector({ stream, targetChord, onChordDetected, onSalience
           {attackGate ? 'Disable' : 'Enable'}
         </button>
       </div>
-
-      {/* Live chroma debug panel */}
-      {showDebug && debugChroma && (
-        <div className="pt-2 border-t space-y-2">
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
-            Live chroma
-          </p>
-          <div className="flex items-end gap-[3px] h-16">
-            {NOTE_NAMES.map((name, i) => {
-              const val = debugChroma[i] ?? 0
-              const h   = Math.round(val * 60)
-              return (
-                <div key={name} className="flex flex-col items-center gap-[2px] flex-1">
-                  <div style={{ height: 52, display: 'flex', alignItems: 'flex-end' }}>
-                    <div
-                      style={{ height: Math.max(h, 2), width: '80%', background: '#a855f7', borderRadius: 2 }}
-                    />
-                  </div>
-                  <span className="text-[8px] text-muted-foreground leading-none">{name}</span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
     </div>
   )
 }

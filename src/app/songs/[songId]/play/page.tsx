@@ -80,6 +80,7 @@ function PlayContent({ songId }: { songId: string }) {
   }
 
   async function handleSaveToCatalog() {
+    if (!songOrPattern) return
     try {
       await fetch('/api/catalog', {
         method: 'POST',

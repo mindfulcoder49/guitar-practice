@@ -36,7 +36,6 @@ function PracticeContent() {
   const [mode, setMode] = useState<'practice' | 'test'>('practice')
   const [immersive, setImmersive] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
-  const [showChromaDebug, setShowChromaDebug] = useState(false)
   const [loop, setLoop] = useState(false)
   const salienceRef = useRef<number[]>([])
 
@@ -239,20 +238,11 @@ function PracticeContent() {
           <MicrophoneSetup onStream={setStream} />
 
           {stream && (
-            <div className="space-y-1">
-              <ChordDetector
-                stream={stream}
-                onChordDetected={setCurrentMatch}
-                onSalience={s => { salienceRef.current = s }}
-                showDebug={showChromaDebug}
-              />
-              <button
-                onClick={() => setShowChromaDebug(v => !v)}
-                className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
-              >
-                {showChromaDebug ? 'Hide chroma debug' : 'Show chroma debug'}
-              </button>
-            </div>
+            <ChordDetector
+              stream={stream}
+              onChordDetected={setCurrentMatch}
+              onSalience={s => { salienceRef.current = s }}
+            />
           )}
 
           <ChordHighway
