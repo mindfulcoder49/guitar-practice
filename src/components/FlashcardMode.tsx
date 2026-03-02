@@ -21,15 +21,23 @@ interface FlashcardModeProps {
 }
 
 // How long the student needs to hold the chord (ms)
-const HOLD_DURATION_MS = 1500
+const HOLD_DURATION_MS = 1000
 // How long a dropout is forgiven before the hold timer resets (ms)
-const GRACE_MS = 700
+const GRACE_MS = 500
 
 export function FlashcardMode({ chord, onNext, onComplete, hasNext }: FlashcardModeProps) {
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [currentMatch, setCurrentMatch] = useState<ChordMatch | null>(null)
   const [holdProgress, setHoldProgress] = useState(0)
   const [confirmed, setConfirmed] = useState(false)
+  const [autoAdvance, setAutoAdvance] = useState(() =>
+    typeof window !== 'undefined' && localStorage.getItem('flashcard-autoAdvance') === 'true'
+  )
+
+  function toggleAutoAdvance(val: boolean) {
+    setAutoAdvance(val)
+    localStorage.setItem('flashcard-autoAdvance', String(val))
+  }
 
   // Hold timer state — stored in refs to avoid re-creating the rAF loop
   const holdStartRef = useRef<number | null>(null)    // when the hold began
@@ -60,6 +68,13 @@ export function FlashcardMode({ chord, onNext, onComplete, hasNext }: FlashcardM
     lastCorrectRef.current = 0
     accuracyHistoryRef.current = []
   }, [chord.name])
+
+  // Auto-advance to next chord when confirmed
+  useEffect(() => {
+    if (!confirmed || !autoAdvance || !hasNext) return
+    const t = setTimeout(() => onNext?.(), 1200)
+    return () => clearTimeout(t)
+  }, [confirmed, autoAdvance, hasNext, onNext])
 
   // Animation loop for the hold bar — runs independently of React render cycle
   useEffect(() => {
@@ -120,6 +135,19 @@ export function FlashcardMode({ chord, onNext, onComplete, hasNext }: FlashcardM
           onChordDetected={setCurrentMatch}
           onSalience={s => { salienceRef.current = s }}
         />
+      )}
+
+      {/* Auto-advance toggle */}
+      {hasNext && (
+        <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={autoAdvance}
+            onChange={e => toggleAutoAdvance(e.target.checked)}
+            className="w-4 h-4 accent-purple-600"
+          />
+          Auto-advance to next chord
+        </label>
       )}
 
       {/* Hold progress — visible while the right chord is held OR during grace period */}

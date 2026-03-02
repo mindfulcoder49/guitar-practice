@@ -61,7 +61,9 @@ interface NoteHighwayProps {
   running: boolean
   currentNoteMatch: NoteMatch | null
   onScore: (hit: boolean) => void
+  onComplete?: () => void
   mode?: 'practice' | 'test'
+  loop?: boolean
   immersive?: boolean
 }
 
@@ -172,8 +174,8 @@ function UpcomingNoteChip({ block }: { block: NoteBlock }) {
 
 export function NoteHighway({
   notes, pattern, patternLoops = 4,
-  bpm, running, currentNoteMatch, onScore,
-  mode = 'test', immersive = false,
+  bpm, running, currentNoteMatch, onScore, onComplete,
+  mode = 'test', loop = false, immersive = false,
 }: NoteHighwayProps) {
 
   const [blocks, setBlocks]           = useState<NoteBlock[]>([])
@@ -223,14 +225,15 @@ export function NoteHighway({
     let elapsed = 0
 
     if (notes && notes.length > 0) {
-      for (let loop = 0; loop < 2; loop++) {
+      const passes = loop ? 2 : 1
+      for (let pass = 0; pass < passes; pass++) {
         for (const evt of notes) {
           if (evt.rest || evt.string === undefined || evt.fret === undefined) {
             elapsed += evt.duration * beatMs
             continue
           }
           newBlocks.push({
-            id:        `${loop}-note-${elapsed}`,
+            id:        `${pass}-note-${elapsed}`,
             string:    evt.string as 1|2|3|4|5|6,
             fret:      evt.fret,
             duration:  evt.duration,
@@ -241,10 +244,11 @@ export function NoteHighway({
         elapsed += beatMs * 2
       }
     } else if (pattern && pattern.length > 0) {
-      for (let loop = 0; loop < patternLoops; loop++) {
+      const passes = loop ? patternLoops : 1
+      for (let pass = 0; pass < passes; pass++) {
         for (const step of pattern) {
           newBlocks.push({
-            id:        `${loop}-step-${elapsed}`,
+            id:        `${pass}-step-${elapsed}`,
             string:    step.string,
             fret:      -1,
             duration:  step.duration,
@@ -257,7 +261,7 @@ export function NoteHighway({
 
     setBlocks(newBlocks)
     blocksRef.current = newBlocks
-  }, [running, notes, pattern, patternLoops, bpm])
+  }, [running, notes, pattern, patternLoops, bpm, loop])
 
   // ── Hit-detection loop ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -338,6 +342,12 @@ export function NoteHighway({
         setBlocks(newBlocks)
       }
 
+      // Auto-stop when all blocks are resolved
+      if (newBlocks.length > 0 && newBlocks.every(b => b.hit || b.missed)) {
+        onComplete?.()
+        return
+      }
+
       if (pauseTrigger) {
         const pt = pauseTrigger as NoteBlock
         pausedGameTimeRef.current = gameTime
@@ -351,7 +361,7 @@ export function NoteHighway({
 
     animRef.current = requestAnimationFrame(tick)
     return () => { if (animRef.current) cancelAnimationFrame(animRef.current) }
-  }, [running, onScore])
+  }, [running, onScore, onComplete])
 
   // ── Upcoming notes preview ─────────────────────────────────────────────────
   const gameTimeNow  = getGameTime()

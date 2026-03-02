@@ -62,7 +62,9 @@ interface ChordHighwayProps {
   currentMatch: ChordMatch | null
   salienceRef?: RefObject<number[]>
   onScore: (hit: boolean, chord: string) => void
+  onComplete?: () => void
   mode?: 'practice' | 'test'
+  loop?: boolean
   immersive?: boolean
 }
 
@@ -295,7 +297,7 @@ function GemColumn({ chordName, flash }: {
 
 export function ChordHighway({
   progression, bpm, running, currentMatch, salienceRef,
-  onScore, mode = 'test', immersive = false,
+  onScore, onComplete, mode = 'test', loop = false, immersive = false,
 }: ChordHighwayProps) {
 
   const [blocks, setBlocks]         = useState<ChordBlock[]>([])
@@ -347,10 +349,11 @@ export function ChordHighway({
 
     const newBlocks: ChordBlock[] = []
     let elapsed = 0
-    for (let loop = 0; loop < 4; loop++) {
+    const passes = loop ? 4 : 1
+    for (let pass = 0; pass < passes; pass++) {
       for (const item of progression) {
         newBlocks.push({
-          id:        `${loop}-${item.chord}-${elapsed}`,
+          id:        `${pass}-${item.chord}-${elapsed}`,
           chord:     item.chord,
           beats:     item.beats,
           startTime: elapsed + effectiveDuration,
@@ -360,7 +363,7 @@ export function ChordHighway({
     }
     setBlocks(newBlocks)
     blocksRef.current = newBlocks
-  }, [running, progression, bpm])
+  }, [running, progression, bpm, loop])
 
   // ── Hit-detection + practice-mode pause loop ──────────────────────────────
   useEffect(() => {
@@ -439,6 +442,12 @@ export function ChordHighway({
         setBlocks(newBlocks)
       }
 
+      // Auto-stop when all blocks are resolved
+      if (newBlocks.length > 0 && newBlocks.every(b => b.hit || b.missed)) {
+        onComplete?.()
+        return
+      }
+
       if (pauseTrigger) {
         const pt = pauseTrigger as { chord: string; id: string }
         pausedGameTimeRef.current = gameTime
@@ -452,7 +461,7 @@ export function ChordHighway({
 
     animRef.current = requestAnimationFrame(tick)
     return () => { if (animRef.current) cancelAnimationFrame(animRef.current) }
-  }, [running, onScore])
+  }, [running, onScore, onComplete])
 
   // ── Compute upcoming chords for the preview row ────────────────────────────
   // Using getGameTime() so upcoming is frozen when paused (preserves current chord)

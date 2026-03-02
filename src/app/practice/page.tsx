@@ -37,6 +37,7 @@ function PracticeContent() {
   const [immersive, setImmersive] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showChromaDebug, setShowChromaDebug] = useState(false)
+  const [loop, setLoop] = useState(false)
   const salienceRef = useRef<number[]>([])
 
   // Load AI progression from URL if present
@@ -171,16 +172,22 @@ function PracticeContent() {
 
         {/* Settings drawer */}
         {showSettings && (
-          <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-800">
-            <span className="text-xs text-gray-400">Mode:</span>
-            <button
-              className={`text-xs px-2 py-1 rounded ${mode === 'practice' ? 'bg-purple-600 text-white' : 'text-gray-400'}`}
-              onClick={() => setMode('practice')}
-            >Practice</button>
-            <button
-              className={`text-xs px-2 py-1 rounded ${mode === 'test' ? 'bg-purple-600 text-white' : 'text-gray-400'}`}
-              onClick={() => setMode('test')}
-            >Test</button>
+          <div className="flex items-center gap-4 px-4 py-2 border-b border-gray-800">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-400">Mode:</span>
+              <button
+                className={`text-xs px-2 py-1 rounded ${mode === 'practice' ? 'bg-purple-600 text-white' : 'text-gray-400'}`}
+                onClick={() => setMode('practice')}
+              >Practice</button>
+              <button
+                className={`text-xs px-2 py-1 rounded ${mode === 'test' ? 'bg-purple-600 text-white' : 'text-gray-400'}`}
+                onClick={() => setMode('test')}
+              >Test</button>
+            </div>
+            <label className="flex items-center gap-1.5 text-xs text-gray-400 cursor-pointer">
+              <input type="checkbox" checked={loop} onChange={e => setLoop(e.target.checked)} className="accent-purple-500" />
+              Loop
+            </label>
           </div>
         )}
 
@@ -199,7 +206,9 @@ function PracticeContent() {
             running={running}
             currentMatch={currentMatch}
             onScore={handleScore}
+            onComplete={handleStop}
             mode={mode}
+            loop={loop}
             immersive={true}
             salienceRef={salienceRef}
           />
@@ -252,7 +261,9 @@ function PracticeContent() {
             running={running}
             currentMatch={currentMatch}
             onScore={handleScore}
+            onComplete={handleStop}
             mode={mode}
+            loop={loop}
             salienceRef={salienceRef}
           />
 
@@ -262,28 +273,40 @@ function PracticeContent() {
             running={running}
           />
 
-          {/* Mode toggle */}
-          <div className="flex gap-1 p-1 bg-muted rounded-lg">
-            <Button
-              size="sm"
-              variant={mode === 'practice' ? 'default' : 'ghost'}
-              className="flex-1 text-xs"
-              onClick={() => setMode('practice')}
-              disabled={running}
-              title="Scrolling pauses on a missed chord until you play it"
-            >
-              Practice
-            </Button>
-            <Button
-              size="sm"
-              variant={mode === 'test' ? 'default' : 'ghost'}
-              className="flex-1 text-xs"
-              onClick={() => setMode('test')}
-              disabled={running}
-              title="Scrolling never stops — scored like a real run"
-            >
-              Test
-            </Button>
+          {/* Mode + loop toggles */}
+          <div className="flex items-center gap-2">
+            <div className="flex gap-1 p-1 bg-muted rounded-lg flex-1">
+              <Button
+                size="sm"
+                variant={mode === 'practice' ? 'default' : 'ghost'}
+                className="flex-1 text-xs"
+                onClick={() => setMode('practice')}
+                disabled={running}
+                title="Scrolling pauses on a missed chord until you play it"
+              >
+                Practice
+              </Button>
+              <Button
+                size="sm"
+                variant={mode === 'test' ? 'default' : 'ghost'}
+                className="flex-1 text-xs"
+                onClick={() => setMode('test')}
+                disabled={running}
+                title="Scrolling never stops — scored like a real run"
+              >
+                Test
+              </Button>
+            </div>
+            <label className="flex items-center gap-1.5 text-sm text-muted-foreground cursor-pointer select-none shrink-0">
+              <input
+                type="checkbox"
+                checked={loop}
+                onChange={e => setLoop(e.target.checked)}
+                disabled={running}
+                className="w-4 h-4 accent-purple-600"
+              />
+              Loop
+            </label>
           </div>
 
           {/* Controls */}

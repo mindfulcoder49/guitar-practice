@@ -16,7 +16,7 @@ import { ChordMatch } from '@/types'
 // SLOW_RMS_ALPHA: EMA decay per Meyda frame (~1 s time-constant at 10 fps).
 const ATTACK_RATIO   = 1.8
 const MIN_ATTACK_RMS = 0.003
-const LOCK_MS        = 600
+const LOCK_MS        = 2000
 const SLOW_RMS_ALPHA = 0.97
 
 // Chroma concentration gate — white noise spreads energy evenly across all 12
