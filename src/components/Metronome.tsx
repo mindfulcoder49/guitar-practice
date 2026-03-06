@@ -9,9 +9,10 @@ interface MetronomeProps {
   onBpmChange: (bpm: number) => void
   running: boolean
   onTick?: (beat: number) => void
+  compact?: boolean
 }
 
-export function Metronome({ bpm, onBpmChange, running, onTick }: MetronomeProps) {
+export function Metronome({ bpm, onBpmChange, running, onTick, compact = false }: MetronomeProps) {
   const [beat, setBeat] = useState(0)
   const [muted, setMuted] = useState(false)
   const synthRef = useRef<unknown>(null)
@@ -78,9 +79,9 @@ export function Metronome({ bpm, onBpmChange, running, onTick }: MetronomeProps)
   }, [running, bpm, onTick])
 
   return (
-    <div className="flex items-center gap-3 p-3 bg-card rounded-lg border">
+    <div className={`flex items-center gap-3 bg-card rounded-lg border ${compact ? 'p-2' : 'p-3'}`}>
       {/* Beat dots */}
-      <div className="flex gap-1 flex-shrink-0">
+      <div className={`flex gap-1 flex-shrink-0 ${compact ? 'hidden sm:flex' : ''}`}>
         {[0, 1, 2, 3].map(b => (
           <div
             key={b}
@@ -105,13 +106,13 @@ export function Metronome({ bpm, onBpmChange, running, onTick }: MetronomeProps)
           onValueChange={([v]) => onBpmChange(v)}
           className="flex-1"
         />
-        <span className="text-sm font-mono w-16 text-right tabular-nums">{bpm} BPM</span>
+        <span className={`${compact ? 'text-xs w-14' : 'text-sm w-16'} font-mono text-right tabular-nums`}>{bpm} BPM</span>
       </div>
 
       {/* Mute toggle */}
       <button
         onClick={() => setMuted(m => !m)}
-        className={`flex-shrink-0 p-2.5 rounded-md transition-colors touch-manipulation ${
+        className={`flex-shrink-0 ${compact ? 'p-2' : 'p-2.5'} rounded-md transition-colors touch-manipulation ${
           muted
             ? 'text-muted-foreground hover:text-foreground'
             : 'text-foreground hover:text-muted-foreground'

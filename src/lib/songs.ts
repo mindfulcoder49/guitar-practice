@@ -20,34 +20,41 @@ function r(dur: number): NoteEvent {
 // str1: f0=E4 f2=F#4 f3=G4
 
 export const SONGS: Song[] = [
-  // ── Smoke on the Water ──────────────────────────────────────────────────────
-  // All on D string (str4). Phrases: D-F-G | D-F-Ab-G | D-F-G-F-D
+  // ── Smoke on the Water (full main riff cycle) ──────────────────────────────
+  // All on D string (str4). Main motif repeated with a turnaround.
   {
     id: 'smoke-on-the-water',
     title: 'Smoke on the Water',
     artist: 'Deep Purple',
     difficulty: 'beginner',
     type: 'melody',
-    bpm: 112,
-    description: 'The iconic 3-note riff on the D string — every guitarist learns this one.',
+    bpm: 108,
+    description: 'Complete main riff cycle with repeats and a turnaround, all on one string.',
     notes: [
-      // Phrase 1: D – F – G (long)
+      // Cycle 1
       n(4, 0, 1),    // D3
       n(4, 3, 0.5),  // F3
-      n(4, 5, 2.5),  // G3
+      n(4, 5, 1.5),  // G3
       r(1),
-      // Phrase 2: D – F – Ab – G (long)
       n(4, 0, 1),    // D3
       n(4, 3, 0.5),  // F3
       n(4, 6, 0.5),  // Ab3
-      n(4, 5, 2.5),  // G3
+      n(4, 5, 1.5),  // G3
       r(0.5),
-      // Phrase 3: D – F – G – F – D (long)
       n(4, 0, 1),    // D3
       n(4, 3, 0.5),  // F3
       n(4, 5, 1),    // G3
       n(4, 3, 0.5),  // F3
-      n(4, 0, 3),    // D3 (ring out)
+      n(4, 0, 2),    // D3
+      r(1),
+
+      // Cycle 2
+      n(4, 0, 1), n(4, 3, 0.5), n(4, 5, 1.5), r(1),
+      n(4, 0, 1), n(4, 3, 0.5), n(4, 6, 0.5), n(4, 5, 1.5), r(0.5),
+      n(4, 0, 1), n(4, 3, 0.5), n(4, 5, 1), n(4, 3, 0.5), n(4, 0, 1.5),
+
+      // Turnaround
+      n(4, 0, 0.5), n(4, 3, 0.5), n(4, 5, 0.5), n(4, 3, 0.5), n(4, 0, 2.5),
     ],
   },
 
@@ -58,40 +65,20 @@ export const SONGS: Song[] = [
   {
     id: 'happy-birthday',
     title: 'Happy Birthday',
+    artist: 'Traditional',
     difficulty: 'beginner',
     type: 'melody',
-    bpm: 100,
-    description: 'The classic birthday melody in D major — great for beginners learning to cross strings.',
+    bpm: 96,
+    description: 'Full four-line melody in D major with natural phrase timing.',
     notes: [
-      // Line 1: D D E D G F# (Happy birth-day to you)
-      n(4, 0, 0.75),   // D3  "Hap-"
-      n(4, 0, 0.25),   // D3  "-py"
-      n(4, 2, 1),      // E3  "Birth-"
-      n(4, 0, 1),      // D3  "-day"
-      n(3, 0, 1),      // G3  "to"
-      n(4, 4, 2),      // F#3 "you"  ← was A3 (wrong), now F#3
-      // Line 2: D D E D A G  (Happy birth-day to you)
-      n(4, 0, 0.75),   // D3
-      n(4, 0, 0.25),   // D3
-      n(4, 2, 1),      // E3
-      n(4, 0, 1),      // D3
-      n(3, 2, 1),      // A3
-      n(3, 0, 2),      // G3
-      // Line 3: D D D4 B G F# E  (Happy birth-day dear ...)
-      n(4, 0, 0.75),   // D3
-      n(4, 0, 0.25),   // D3
-      n(2, 3, 1),      // D4  (high D)
-      n(2, 0, 1),      // B3
-      n(3, 0, 1),      // G3
-      n(4, 4, 0.5),    // F#3
-      n(4, 2, 1.5),    // E3
-      // Line 4: C# C# B G A G  (Happy birth-day to you)
-      n(2, 2, 0.75),   // C#4
-      n(2, 2, 0.25),   // C#4
-      n(2, 0, 1),      // B3
-      n(3, 0, 1),      // G3
-      n(3, 2, 1),      // A3
-      n(3, 0, 3),      // G3 (ring out)
+      // Line 1
+      n(4, 0, 0.75), n(4, 0, 0.25), n(4, 2, 1), n(4, 0, 1), n(3, 0, 1), n(4, 4, 2),
+      // Line 2
+      n(4, 0, 0.75), n(4, 0, 0.25), n(4, 2, 1), n(4, 0, 1), n(3, 2, 1), n(3, 0, 2),
+      // Line 3
+      n(4, 0, 0.75), n(4, 0, 0.25), n(2, 3, 1), n(2, 0, 1), n(3, 0, 1), n(4, 4, 0.5), n(4, 2, 1.5),
+      // Line 4
+      n(2, 2, 0.75), n(2, 2, 0.25), n(2, 0, 1), n(3, 0, 1), n(3, 2, 1), n(3, 0, 3),
     ],
   },
 
@@ -104,32 +91,24 @@ export const SONGS: Song[] = [
     artist: 'The White Stripes',
     difficulty: 'beginner',
     type: 'melody',
-    bpm: 124,
-    description: 'That unstoppable riff — play it on the A string for the classic sound.',
+    bpm: 120,
+    description: 'Extended riff form with repeated cycles and a chromatic turnaround.',
     notes: [
-      // Phrase 1: E – E – G – E – D – C – B
-      n(5, 7, 2),    // E3  (long, iconic entrance)
-      n(5, 7, 0.5),  // E3
-      n(5, 10, 0.5), // G3
-      n(5, 7, 1),    // E3
-      n(5, 5, 0.5),  // D3
-      n(5, 3, 0.5),  // C3
-      n(5, 2, 2),    // B2  (long)
+      // Cycle 1
+      n(5, 7, 2), n(5, 7, 0.5), n(5, 10, 0.5), n(5, 7, 1), n(5, 5, 0.5), n(5, 3, 0.5), n(5, 2, 2),
       r(1),
-      // Phrase 2: E – E – G – E – Eb – E (ending variation)
-      n(5, 7, 2),    // E3
-      n(5, 7, 0.5),  // E3
-      n(5, 10, 0.5), // G3
-      n(5, 7, 1),    // E3
-      n(5, 6, 0.5),  // Eb3 (chromatic slide)
-      n(5, 7, 2.5),  // E3  (hold to end)
+
+      // Cycle 2
+      n(5, 7, 2), n(5, 7, 0.5), n(5, 10, 0.5), n(5, 7, 1), n(5, 5, 0.5), n(5, 3, 0.5), n(5, 2, 1.5),
+      r(0.5),
+
+      // Turnaround
+      n(5, 7, 1), n(5, 6, 0.5), n(5, 5, 0.5), n(5, 3, 0.5), n(5, 2, 0.5), n(5, 7, 2.5),
     ],
   },
 
-  // ── Ode to Joy ──────────────────────────────────────────────────────────────
-  // In C major on strings 1 and 2. Uses natural F (fret 1), not F# (fret 2).
-  // str1: f0=E4, f1=F4, f3=G4
-  // str2: f1=C4, f3=D4
+  // ── Ode to Joy (full classroom arrangement) ────────────────────────────────
+  // In C major on strings 1 and 2.
   {
     id: 'ode-to-joy',
     title: 'Ode to Joy',
@@ -137,175 +116,223 @@ export const SONGS: Song[] = [
     difficulty: 'beginner',
     type: 'melody',
     bpm: 96,
-    description: "Beethoven's famous melody — played on the high e and B strings.",
+    description: "Beethoven's theme arranged as a full A-A-B-A style classroom performance.",
     notes: [
-      // Phrase 1: E E F G | G F E D | C C D E | E·D D
-      n(1, 0, 1),    // E4
-      n(1, 0, 1),    // E4
-      n(1, 1, 1),    // F4  (natural — fret 1, not F# fret 2)
-      n(1, 3, 1),    // G4
-      n(1, 3, 1),    // G4
-      n(1, 1, 1),    // F4
-      n(1, 0, 1),    // E4
-      n(2, 3, 1),    // D4
-      n(2, 1, 1),    // C4
-      n(2, 1, 1),    // C4
-      n(2, 3, 1),    // D4
-      n(1, 0, 1.5),  // E4  (dotted quarter)
-      n(2, 3, 0.5),  // D4  (eighth)
-      n(2, 3, 2),    // D4  (half — held)
+      // A1
+      n(1, 0, 1), n(1, 0, 1), n(1, 1, 1), n(1, 3, 1), n(1, 3, 1), n(1, 1, 1), n(1, 0, 1), n(2, 3, 1),
+      n(2, 1, 1), n(2, 1, 1), n(2, 3, 1), n(1, 0, 1.5), n(2, 3, 0.5), n(2, 3, 2),
       r(1),
-      // Phrase 2: E E F G | G F E D | C C D E | D·C C
-      n(1, 0, 1),    // E4
-      n(1, 0, 1),    // E4
-      n(1, 1, 1),    // F4
-      n(1, 3, 1),    // G4
-      n(1, 3, 1),    // G4
-      n(1, 1, 1),    // F4
-      n(1, 0, 1),    // E4
-      n(2, 3, 1),    // D4
-      n(2, 1, 1),    // C4
-      n(2, 1, 1),    // C4
-      n(2, 3, 1),    // D4
-      n(1, 0, 1),    // E4
-      n(2, 3, 1.5),  // D4  (dotted quarter)
-      n(2, 1, 0.5),  // C4  (eighth)
-      n(2, 1, 2),    // C4  (half — held)
+      // A2
+      n(1, 0, 1), n(1, 0, 1), n(1, 1, 1), n(1, 3, 1), n(1, 3, 1), n(1, 1, 1), n(1, 0, 1), n(2, 3, 1),
+      n(2, 1, 1), n(2, 1, 1), n(2, 3, 1), n(1, 0, 1), n(2, 3, 1.5), n(2, 1, 0.5), n(2, 1, 2),
+      r(1),
+
+      // B section
+      n(2, 3, 1), n(2, 3, 1), n(1, 0, 1), n(2, 3, 1), n(2, 1, 1), n(2, 1, 1), n(1, 0, 1), n(1, 1, 1),
+      n(1, 3, 1), n(1, 3, 1), n(1, 1, 1), n(1, 0, 1), n(2, 3, 1), n(2, 1, 2),
+      r(1),
+
+      // Final A cadence
+      n(1, 0, 1), n(1, 0, 1), n(1, 1, 1), n(1, 3, 1), n(1, 3, 1), n(1, 1, 1), n(1, 0, 1), n(2, 3, 1),
+      n(2, 1, 1), n(2, 1, 1), n(2, 3, 1), n(1, 0, 1), n(2, 3, 1), n(2, 1, 3),
     ],
   },
 
-  // ── Sunshine of Your Love ───────────────────────────────────────────────────
-  // In D blues/mixolydian. Descending figure then back up.
-  // str4: f0=D3, f2=E3, f4=F#3, f5=G3, f11=C#4, f12=D4
-  // str5: f7=E3, f9=F#3, f10=G3, f12=A3
+  // ── Twinkle Twinkle Little Star (complete) ─────────────────────────────────
+  // In C major. C4=str2f1, D4=str2f3, E4=str1f0, F4=str1f1, G4=str1f3, A4=str1f5
   {
-    id: 'sunshine-of-your-love',
-    title: 'Sunshine of Your Love',
-    artist: 'Cream',
-    difficulty: 'intermediate',
+    id: 'twinkle-twinkle',
+    title: 'Twinkle Twinkle Little Star',
+    artist: 'Traditional',
+    difficulty: 'beginner',
     type: 'melody',
-    bpm: 114,
-    description: "Clapton's legendary bluesy riff — starts high on D4 and descends through the D blues scale.",
+    bpm: 92,
+    description: 'Complete six-line nursery melody with clear phrase endings.',
     notes: [
-      // Descend: D4 – C#4 – A3 – G3 – F#3 – G3
-      n(4, 12, 2),   // D4  (long, iconic)
-      n(4, 11, 1),   // C#4 ← was C4 (wrong), now C#4
-      n(5, 12, 1),   // A3
-      n(5, 10, 1),   // G3
-      n(5, 9, 1),    // F#3 (blue note)
-      n(5, 10, 2),   // G3
-      r(1),
-      // Lower phrase: E3 – F#3 – E3 – D3
-      n(5, 7, 2),    // E3
-      n(5, 9, 1),    // F#3
-      n(5, 7, 1),    // E3
-      n(5, 5, 1),    // D3
-      n(5, 7, 3),    // E3  (hold)
+      // Twinkle, twinkle, little star
+      n(2, 1, 1), n(2, 1, 1), n(1, 3, 1), n(1, 3, 1), n(1, 5, 1), n(1, 5, 1), n(1, 3, 2),
+      // How I wonder what you are
+      n(1, 1, 1), n(1, 1, 1), n(1, 0, 1), n(1, 0, 1), n(2, 3, 1), n(2, 3, 1), n(2, 1, 2),
+      // Up above the world so high
+      n(1, 3, 1), n(1, 3, 1), n(1, 1, 1), n(1, 1, 1), n(1, 0, 1), n(1, 0, 1), n(2, 3, 2),
+      // Like a diamond in the sky
+      n(1, 3, 1), n(1, 3, 1), n(1, 1, 1), n(1, 1, 1), n(1, 0, 1), n(1, 0, 1), n(2, 3, 2),
+      // Twinkle, twinkle, little star
+      n(2, 1, 1), n(2, 1, 1), n(1, 3, 1), n(1, 3, 1), n(1, 5, 1), n(1, 5, 1), n(1, 3, 2),
+      // How I wonder what you are
+      n(1, 1, 1), n(1, 1, 1), n(1, 0, 1), n(1, 0, 1), n(2, 3, 1), n(2, 3, 1), n(2, 1, 3),
     ],
   },
 
-  // ── Eye of the Tiger ────────────────────────────────────────────────────────
-  // Simplified single-note version of the famous riff in G.
-  // str3: f0=G3, f3=Bb3
-  // str4: f1=Eb3, f3=F3
-  // str5: f3=C3
+  // ── Frere Jacques (complete round melody) ──────────────────────────────────
+  // C major melody: C D E C | C D E C | E F G | E F G | G A G F E C | ... etc
   {
-    id: 'eye-of-the-tiger',
-    title: 'Eye of the Tiger',
-    artist: 'Survivor',
-    difficulty: 'intermediate',
+    id: 'frere-jacques',
+    title: 'Frere Jacques',
+    artist: 'Traditional',
+    difficulty: 'beginner',
     type: 'melody',
-    bpm: 108,
-    description: "The power-riff simplified to single notes — G-G-Bb-G-F-Eb-C on the middle strings.",
+    bpm: 98,
+    description: 'Full round melody in C major; great for steady tempo and phrase memory.',
     notes: [
-      // Phrase 1: G G Bb G F Eb C
-      n(3, 0, 0.5),  // G3
-      n(3, 0, 0.5),  // G3
-      n(3, 3, 1),    // Bb3
-      n(3, 0, 1),    // G3
-      n(4, 3, 0.5),  // F3
-      n(4, 1, 0.5),  // Eb3
-      n(5, 3, 2),    // C3
-      r(1),
-      // Phrase 2: G G Bb G Eb G (ending climbs back)
-      n(3, 0, 0.5),  // G3
-      n(3, 0, 0.5),  // G3
-      n(3, 3, 1),    // Bb3
-      n(3, 0, 1),    // G3
-      n(4, 1, 0.5),  // Eb3
-      n(3, 0, 2.5),  // G3  (hold)
+      n(2, 1, 1), n(2, 3, 1), n(1, 0, 1), n(2, 1, 1),
+      n(2, 1, 1), n(2, 3, 1), n(1, 0, 1), n(2, 1, 1),
+      n(1, 0, 1), n(1, 1, 1), n(1, 3, 2),
+      n(1, 0, 1), n(1, 1, 1), n(1, 3, 2),
+      n(1, 3, 0.75), n(1, 5, 0.75), n(1, 3, 0.75), n(1, 1, 0.75), n(1, 0, 1), n(2, 1, 1),
+      n(1, 3, 0.75), n(1, 5, 0.75), n(1, 3, 0.75), n(1, 1, 0.75), n(1, 0, 1), n(2, 1, 1),
+      n(2, 1, 1), n(1, 3, 1), n(2, 1, 2),
+      n(2, 1, 1), n(1, 3, 1), n(2, 1, 3),
+    ],
+  },
+
+  // ── Mary Had a Little Lamb (full verse) ────────────────────────────────────
+  // In C major around E4-D4-C4.
+  {
+    id: 'mary-had-a-little-lamb',
+    title: 'Mary Had a Little Lamb',
+    artist: 'Traditional',
+    difficulty: 'beginner',
+    type: 'melody',
+    bpm: 104,
+    description: 'Complete first verse melody with repeats and ending cadence.',
+    notes: [
+      n(1, 0, 1), n(2, 3, 1), n(2, 1, 1), n(2, 3, 1),
+      n(1, 0, 1), n(1, 0, 1), n(1, 0, 2),
+      n(2, 3, 1), n(2, 3, 1), n(2, 3, 2),
+      n(1, 0, 1), n(1, 3, 1), n(1, 3, 2),
+      n(1, 0, 1), n(2, 3, 1), n(2, 1, 1), n(2, 3, 1),
+      n(1, 0, 1), n(1, 0, 1), n(1, 0, 1), n(1, 0, 1),
+      n(2, 3, 1), n(2, 3, 1), n(1, 0, 1), n(2, 3, 1), n(2, 1, 3),
     ],
   },
 ]
 
 export const FINGERPICK_PATTERNS: FingerpickPattern[] = [
   {
-    id: 'em-arpeggio',
-    title: 'Em Arpeggio',
+    id: 'em-travis-flow',
+    title: 'Em Travis Flow',
     chordName: 'Em',
     difficulty: 'beginner',
     type: 'fingerpick',
-    bpm: 70,
-    loops: 4,
-    description: 'Classic 6-string arpeggio — thumb on bass, fingers roll up through treble strings.',
+    bpm: 78,
+    loops: 6,
+    description: '8-step alternating bass with a smooth top-string answer.',
     sequence: [
-      { string: 6, duration: 1 },
-      { string: 4, duration: 1 },
-      { string: 3, duration: 1 },
-      { string: 2, duration: 1 },
-      { string: 1, duration: 1 },
-      { string: 2, duration: 1 },
+      { string: 6, duration: 0.5 },
+      { string: 3, duration: 0.5 },
+      { string: 4, duration: 0.5 },
+      { string: 2, duration: 0.5 },
+      { string: 6, duration: 0.5 },
+      { string: 3, duration: 0.5 },
+      { string: 4, duration: 0.5 },
+      { string: 1, duration: 0.5 },
     ],
   },
   {
-    id: 'am-travis-pick',
-    title: 'Am Travis Pick',
+    id: 'am-ballad-roll',
+    title: 'Am Ballad Roll',
     chordName: 'Am',
     difficulty: 'intermediate',
     type: 'fingerpick',
-    bpm: 80,
-    loops: 4,
-    description: 'Travis-style alternating bass — thumb alternates 5th/4th strings while fingers pluck melody.',
+    bpm: 82,
+    loops: 6,
+    description: '12-step ballad pattern with alternating bass and repeated melody tones.',
     sequence: [
       { string: 5, duration: 0.5 },
       { string: 2, duration: 0.5 },
       { string: 4, duration: 0.5 },
-      { string: 3, duration: 0.5 },
-      { string: 5, duration: 0.5 },
       { string: 1, duration: 0.5 },
+      { string: 5, duration: 0.5 },
+      { string: 3, duration: 0.5 },
       { string: 4, duration: 0.5 },
       { string: 2, duration: 0.5 },
+      { string: 5, duration: 0.5 },
+      { string: 3, duration: 0.5 },
+      { string: 4, duration: 0.5 },
+      { string: 1, duration: 0.5 },
     ],
   },
   {
-    id: 'g-major-pattern',
-    title: 'G Major Pattern',
+    id: 'g-folk-drive',
+    title: 'G Folk Drive',
     chordName: 'G',
     difficulty: 'beginner',
     type: 'fingerpick',
-    bpm: 75,
-    loops: 4,
-    description: 'Simple G major picking pattern — bass note then up through the chord.',
+    bpm: 88,
+    loops: 6,
+    description: 'Driving 8th-note folk pattern with bass pulse and upper-string movement.',
     sequence: [
-      { string: 6, duration: 1 },
-      { string: 3, duration: 1 },
-      { string: 2, duration: 1 },
-      { string: 1, duration: 1 },
+      { string: 6, duration: 0.5 },
+      { string: 3, duration: 0.5 },
+      { string: 2, duration: 0.5 },
+      { string: 1, duration: 0.5 },
+      { string: 6, duration: 0.5 },
+      { string: 3, duration: 0.5 },
+      { string: 2, duration: 0.5 },
+      { string: 1, duration: 0.5 },
     ],
   },
   {
-    id: 'c-major-waltz',
-    title: 'C Major Waltz',
+    id: 'c-crosspick-12',
+    title: 'C Crosspick 12',
     chordName: 'C',
+    difficulty: 'intermediate',
+    type: 'fingerpick',
+    bpm: 84,
+    loops: 5,
+    description: '12-step crosspicking figure that cycles through inner and outer strings.',
+    sequence: [
+      { string: 5, duration: 0.5 },
+      { string: 3, duration: 0.5 },
+      { string: 2, duration: 0.5 },
+      { string: 4, duration: 0.5 },
+      { string: 1, duration: 0.5 },
+      { string: 2, duration: 0.5 },
+      { string: 5, duration: 0.5 },
+      { string: 3, duration: 0.5 },
+      { string: 2, duration: 0.5 },
+      { string: 4, duration: 0.5 },
+      { string: 1, duration: 0.5 },
+      { string: 2, duration: 0.5 },
+    ],
+  },
+  {
+    id: 'dm-cinematic-pulse',
+    title: 'Dm Cinematic Pulse',
+    chordName: 'Dm',
+    difficulty: 'intermediate',
+    type: 'fingerpick',
+    bpm: 76,
+    loops: 6,
+    description: 'Moody 8-step pulse built around low-to-high movement.',
+    sequence: [
+      { string: 4, duration: 0.5 },
+      { string: 3, duration: 0.5 },
+      { string: 2, duration: 0.5 },
+      { string: 1, duration: 0.5 },
+      { string: 4, duration: 0.5 },
+      { string: 2, duration: 0.5 },
+      { string: 3, duration: 0.5 },
+      { string: 1, duration: 0.5 },
+    ],
+  },
+  {
+    id: 'd-folk-waltz',
+    title: 'D Folk Waltz',
+    chordName: 'D',
     difficulty: 'beginner',
     type: 'fingerpick',
-    bpm: 90,
-    loops: 4,
-    description: 'Waltz-feel picking in 3/4 time — bass then two treble strings.',
+    bpm: 92,
+    loops: 6,
+    description: '3/4-style pattern with alternating bass and bright treble response.',
     sequence: [
-      { string: 5, duration: 1 },
-      { string: 2, duration: 1 },
-      { string: 1, duration: 1 },
+      { string: 4, duration: 1 },
+      { string: 2, duration: 0.5 },
+      { string: 1, duration: 0.5 },
+      { string: 3, duration: 1 },
+      { string: 2, duration: 0.5 },
+      { string: 1, duration: 0.5 },
     ],
   },
 ]

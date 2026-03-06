@@ -13,6 +13,7 @@ const ATTACK_RATIO   = 1.8
 const MIN_ATTACK_RMS = 0.003
 const LOCK_MS        = 2000
 const SLOW_RMS_ALPHA = 0.97
+const STABLE_MATCH_FRAMES = 2
 
 // Chroma concentration gate — white noise spreads energy evenly across all 12
 // pitch classes. A guitar chord uses up to 6 strings, so up to 6 distinct pitch
@@ -54,6 +55,9 @@ export function ChordDetector({ stream, targetChord, onChordDetected, onSalience
   const slowRmsRef    = useRef<number>(0.001)
   const lastAttackRef = useRef<number>(-Infinity)
   const hasMatchRef   = useRef<boolean>(false)
+  const pendingChordRef = useRef<string | null>(null)
+  const pendingCountRef = useRef<number>(0)
+  const emittedChordRef = useRef<string | null>(null)
 
   attackGateRef.current = attackGate
 
@@ -80,6 +84,9 @@ export function ChordDetector({ stream, targetChord, onChordDetected, onSalience
       if (timeSinceAttack > LOCK_MS) {
         if (hasMatchRef.current) {
           hasMatchRef.current = false
+          pendingChordRef.current = null
+          pendingCountRef.current = 0
+          emittedChordRef.current = null
           setCurrentMatch(null)
           onChordDetected?.(null)
           onSalience?.(new Array(SALIENCE_SIZE).fill(0))
@@ -96,6 +103,9 @@ export function ChordDetector({ stream, targetChord, onChordDetected, onSalience
     if (!isChordLike) {
       if (hasMatchRef.current) {
         hasMatchRef.current = false
+        pendingChordRef.current = null
+        pendingCountRef.current = 0
+        emittedChordRef.current = null
         setCurrentMatch(null)
         onChordDetected?.(null)
         onSalience?.(new Array(SALIENCE_SIZE).fill(0))
@@ -109,9 +119,39 @@ export function ChordDetector({ stream, targetChord, onChordDetected, onSalience
 
     onSalience?.(smoothed)
     const match    = matchChordFromSalience(smoothed)
-    hasMatchRef.current = match !== null
-    setCurrentMatch(match)
-    onChordDetected?.(match)
+
+    if (!match) {
+      pendingChordRef.current = null
+      pendingCountRef.current = 0
+      if (hasMatchRef.current) {
+        hasMatchRef.current = false
+        emittedChordRef.current = null
+        setCurrentMatch(null)
+        onChordDetected?.(null)
+      }
+      return
+    }
+
+    if (emittedChordRef.current === match.chord) {
+      hasMatchRef.current = true
+      setCurrentMatch(match)
+      onChordDetected?.(match)
+      return
+    }
+
+    if (pendingChordRef.current === match.chord) {
+      pendingCountRef.current += 1
+    } else {
+      pendingChordRef.current = match.chord
+      pendingCountRef.current = 1
+    }
+
+    if (pendingCountRef.current >= STABLE_MATCH_FRAMES) {
+      hasMatchRef.current = true
+      emittedChordRef.current = match.chord
+      setCurrentMatch(match)
+      onChordDetected?.(match)
+    }
   }, [onChordDetected, onSalience])
 
   useEffect(() => {
@@ -119,6 +159,9 @@ export function ChordDetector({ stream, targetChord, onChordDetected, onSalience
       slowRmsRef.current    = 0.001
       lastAttackRef.current = -Infinity
       hasMatchRef.current   = false
+      pendingChordRef.current = null
+      pendingCountRef.current = 0
+      emittedChordRef.current = null
       return
     }
 
@@ -162,6 +205,9 @@ export function ChordDetector({ stream, targetChord, onChordDetected, onSalience
       }
       audioCtxRef.current?.close()
       smootherRef.current.reset()
+      pendingChordRef.current = null
+      pendingCountRef.current = 0
+      emittedChordRef.current = null
     }
   }, [stream, handleFeatures])
 

@@ -3,13 +3,22 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { getOpenAI, buildSystemPrompt } from '@/lib/openai'
 
+type ChatModel = 'gpt-5-mini' | 'gpt-5'
+const DEFAULT_MODEL: ChatModel = 'gpt-5-mini'
+
 export async function POST(req: NextRequest) {
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { messages } = await req.json()
+  const body = await req.json()
+  const messages = Array.isArray(body?.messages) ? body.messages : []
+  const requestedModel = body?.model
+  const model: ChatModel =
+    requestedModel === 'gpt-5' || requestedModel === 'gpt-5-mini'
+      ? requestedModel
+      : DEFAULT_MODEL
 
   // Get user's learned chords and songs
   const [learnedChords, learnedSongs] = await Promise.all([
@@ -28,7 +37,7 @@ export async function POST(req: NextRequest) {
   const systemPrompt = buildSystemPrompt(chordNames, songIds)
 
   const stream = await getOpenAI().chat.completions.create({
-    model: 'gpt-4o',
+    model,
     messages: [
       { role: 'system', content: systemPrompt },
       ...messages,

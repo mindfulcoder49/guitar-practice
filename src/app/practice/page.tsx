@@ -144,9 +144,15 @@ function PracticeContent() {
   // ── Immersive layout ─────────────────────────────────────────────────────────
   if (immersive) {
     return (
-      <div className="fixed inset-0 z-50 bg-gray-950 flex flex-col">
+      <div
+        className="fixed inset-0 z-50 h-[100dvh] bg-gray-950 flex flex-col overflow-hidden"
+        style={{
+          paddingTop: 'env(safe-area-inset-top)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}
+      >
         {/* Top HUD */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-gray-800">
+        <div className="flex items-center justify-between px-3 sm:px-4 py-2 border-b border-gray-800 shrink-0">
           <div className="flex items-center gap-3 text-sm">
             <span className="text-yellow-400 font-bold text-lg">{score}</span>
             <span className="text-green-400">✓ {hits}</span>
@@ -171,7 +177,7 @@ function PracticeContent() {
 
         {/* Settings drawer */}
         {showSettings && (
-          <div className="flex items-center gap-4 px-4 py-2 border-b border-gray-800">
+          <div className="flex items-center gap-4 px-3 sm:px-4 py-2 border-b border-gray-800 shrink-0">
             <div className="flex items-center gap-2">
               <span className="text-xs text-gray-400">Mode:</span>
               <button
@@ -191,12 +197,13 @@ function PracticeContent() {
         )}
 
         {/* Highway */}
-        <div className="flex-1 overflow-hidden p-2">
+        <div className="flex-1 min-h-0 overflow-hidden p-1.5 sm:p-2">
           {stream && (
             <ChordDetector
               stream={stream}
               onChordDetected={setCurrentMatch}
               onSalience={s => { salienceRef.current = s }}
+              children={() => null}
             />
           )}
           <ChordHighway
@@ -214,8 +221,8 @@ function PracticeContent() {
         </div>
 
         {/* Bottom HUD */}
-        <div className="border-t border-gray-800 px-4 py-2">
-          <Metronome bpm={bpm} onBpmChange={setBpm} running={running} />
+        <div className="border-t border-gray-800 px-2.5 sm:px-4 py-1.5 sm:py-2 shrink-0">
+          <Metronome bpm={bpm} onBpmChange={setBpm} running={running} compact />
         </div>
       </div>
     )

@@ -10,7 +10,8 @@ import { ChordTemplate, ChordMatch } from '@/types'
 import { chordsInSameFamily } from '@/lib/chords'
 import { scoreChordFromSalience } from '@/lib/chordDetection'
 
-const TARGETED_THRESHOLD = 0.28
+const TARGETED_THRESHOLD = 0.36
+const BLIND_CONFIDENCE_FLOOR = 0.5
 import { CheckCircle, ChevronRight } from 'lucide-react'
 
 interface FlashcardModeProps {
@@ -55,7 +56,9 @@ export function FlashcardMode({ chord, onNext, onComplete, hasNext }: FlashcardM
     // Targeted: check if the actual chord's salience score clears the threshold.
     // Fall back to blind family match so it still works if salience is empty.
     const targeted = scoreChordFromSalience(salienceRef.current, chord.name) >= TARGETED_THRESHOLD
-    const blind    = _m != null && chordsInSameFamily(chord.name, _m.chord)
+    const blind    = _m != null
+      && _m.confidence >= BLIND_CONFIDENCE_FLOOR
+      && chordsInSameFamily(chord.name, _m.chord)
     return targeted || blind
   }, [chord.name])
 

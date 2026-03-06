@@ -127,6 +127,7 @@ export class NoteSalienceSmoother {
 
 // ─── Chord matching ────────────────────────────────────────────────────────────
 const NOTE_DETECTION_THRESHOLD = 0.35
+const NOTE_MARGIN_THRESHOLD = 0.06
 
 /**
  * Targeted scoring: how well does `salience` match one specific chord?
@@ -147,15 +148,30 @@ export function matchChordFromSalience(salience: number[]): ChordMatch | null {
   if (max === 0) return null
   const normalized = salience.map(v => v / max)
 
-  let best: ChordMatch | null = null
+  let bestName: string | null = null
+  let bestScore = -Infinity
+  let secondBestScore = -Infinity
+
   for (const name of CURRICULUM_ORDER) {
     const template = NOTE_TEMPLATES[name]
     if (!template) continue
     const score = diceSimilarity(normalized, template)
-    if (!best || score > best.confidence) best = { chord: name, confidence: score }
+
+    if (score > bestScore) {
+      secondBestScore = bestScore
+      bestScore = score
+      bestName = name
+    } else if (score > secondBestScore) {
+      secondBestScore = score
+    }
   }
 
-  return best && best.confidence >= NOTE_DETECTION_THRESHOLD ? best : null
+  if (!bestName || bestScore < NOTE_DETECTION_THRESHOLD) return null
+
+  const margin = bestScore - (secondBestScore === -Infinity ? 0 : secondBestScore)
+  if (margin < NOTE_MARGIN_THRESHOLD) return null
+
+  return { chord: bestName, confidence: bestScore }
 }
 
 // ─── Legacy chroma-based API (kept for the debug display in ChordDetector) ────

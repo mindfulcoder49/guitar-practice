@@ -53,7 +53,8 @@ interface ChordBlock {
 // Minimum targeted Dice score to count as playing the right chord.
 // Lower than the blind-detection threshold because we're not competing against
 // all other chords — we just need enough signal that the right chord is there.
-const TARGETED_THRESHOLD = 0.28
+const TARGETED_THRESHOLD = 0.36
+const BLIND_CONFIDENCE_FLOOR = 0.5
 
 interface ChordHighwayProps {
   progression: ProgressionChord[]
@@ -85,7 +86,7 @@ function HorizontalChordCard({ chordName, opacity = 1 }: { chordName: string; op
   return (
     <div style={{ opacity }}>
       <p style={{
-        fontSize: 10, fontWeight: 700,
+        fontSize: 13, fontWeight: 700,
         color: 'rgba(255,255,255,0.85)',
         textAlign: 'center', marginBottom: 2,
       }}>
@@ -258,7 +259,7 @@ function Gem({ kind, color, flash }: {
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
       {isFret && flash !== 'hit' && flash !== 'miss' && (
-        <span style={{ fontSize: 11, fontWeight: 'bold', color: 'rgba(0,0,0,0.72)', lineHeight: 1, userSelect: 'none' }}>
+        <span style={{ fontSize: 15, fontWeight: 'bold', color: 'rgba(0,0,0,0.72)', lineHeight: 1, userSelect: 'none' }}>
           {kind}
         </span>
       )}
@@ -278,7 +279,7 @@ function GemColumn({ chordName, flash }: {
 
   return (
     <div className="flex flex-col items-center">
-      <div className="text-[10px] font-bold text-white/80 text-center mb-0.5 whitespace-nowrap" style={{ minWidth: GEM_W }}>
+      <div className="text-xs sm:text-sm font-bold text-white/90 text-center mb-0.5 whitespace-nowrap" style={{ minWidth: GEM_W }}>
         {chordName}
       </div>
       {displayGems.map((kind, displayIdx) => (
@@ -383,7 +384,9 @@ export function ChordHighway({
       // ── Paused (practice mode): waiting for student to play the right chord ──
       if (pausedChordRef.current !== null) {
         const targetedHit = scoreChordFromSalience(salienceRef?.current ?? [], pausedChordRef.current) >= TARGETED_THRESHOLD
-        const blindHit    = match?.chord != null && chordsInSameFamily(pausedChordRef.current, match.chord)
+        const blindHit    = match?.chord != null
+          && match.confidence >= BLIND_CONFIDENCE_FLOOR
+          && chordsInSameFamily(pausedChordRef.current, match.chord)
         if (targetedHit || blindHit) {
           // Student got it — resume
           const frozenTime = pausedGameTimeRef.current!
@@ -416,7 +419,9 @@ export function ChordHighway({
         const inWindow  = timeToHit > -HIT_WINDOW_MS && timeToHit < HIT_WINDOW_MS
 
         const targetedHit = scoreChordFromSalience(salienceRef?.current ?? [], block.chord) >= TARGETED_THRESHOLD
-        const blindHit    = match?.chord != null && chordsInSameFamily(block.chord, match.chord)
+        const blindHit    = match?.chord != null
+          && match.confidence >= BLIND_CONFIDENCE_FLOOR
+          && chordsInSameFamily(block.chord, match.chord)
         if (inWindow && (targetedHit || blindHit)) {
           onScore(true, block.chord)
           return { ...block, hit: true }
@@ -479,13 +484,14 @@ export function ChordHighway({
       ]
     : []
 
-  const totalHeight = immersive ? LANE_HEIGHT * 6 + 120 : LANE_HEIGHT * 6 + 20
+  const showUpcoming = !immersive
+  const totalHeight = immersive ? LANE_HEIGHT * 6 + 56 : LANE_HEIGHT * 6 + 20
 
   return (
     <div className="flex flex-col gap-3">
 
       {/* ── Upcoming chord cards (horizontal layout matching highway) ── */}
-      {upcoming.length > 0 && (
+      {showUpcoming && upcoming.length > 0 && (
         <div
           className="flex items-start gap-4 p-3 rounded-xl border border-gray-700 overflow-x-auto"
           style={{ background: '#111827' }}

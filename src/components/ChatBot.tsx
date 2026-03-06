@@ -14,6 +14,8 @@ interface ChatBotProps {
   onLoadProgression?: (progression: ProgressionChord[]) => void
 }
 
+type ChatModel = 'gpt-5-mini' | 'gpt-5'
+
 /**
  * Pull the first JSON value out of a message, whether it's wrapped in a
  * ```json … ``` fence or returned as bare JSON.
@@ -111,7 +113,20 @@ export function ChatBot({ onLoadProgression }: ChatBotProps) {
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [model, setModel] = useState<ChatModel>('gpt-5-mini')
   const bottomRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const saved = localStorage.getItem('chat-model')
+    if (saved === 'gpt-5' || saved === 'gpt-5-mini') {
+      setModel(saved)
+    }
+  }, [])
+
+  function chooseModel(next: ChatModel) {
+    setModel(next)
+    localStorage.setItem('chat-model', next)
+  }
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -130,7 +145,10 @@ export function ChatBot({ onLoadProgression }: ChatBotProps) {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages.map(m => ({ role: m.role, content: m.content })) }),
+        body: JSON.stringify({
+          model,
+          messages: newMessages.map(m => ({ role: m.role, content: m.content })),
+        }),
       })
 
       if (!res.ok || !res.body) throw new Error('Failed to get response')
@@ -263,6 +281,33 @@ export function ChatBot({ onLoadProgression }: ChatBotProps) {
       </div>
 
       <div className="border-t p-4">
+        <div className="mb-2 flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">Model:</span>
+          <button
+            type="button"
+            onClick={() => chooseModel('gpt-5-mini')}
+            disabled={loading}
+            className={`px-2 py-1 rounded text-xs border transition-colors ${
+              model === 'gpt-5-mini'
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-background text-foreground border-border hover:bg-muted'
+            }`}
+          >
+            gpt-5-mini
+          </button>
+          <button
+            type="button"
+            onClick={() => chooseModel('gpt-5')}
+            disabled={loading}
+            className={`px-2 py-1 rounded text-xs border transition-colors ${
+              model === 'gpt-5'
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-background text-foreground border-border hover:bg-muted'
+            }`}
+          >
+            gpt-5
+          </button>
+        </div>
         <div className="flex gap-2">
           <Input
             value={input}
