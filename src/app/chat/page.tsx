@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { MessageSquare } from 'lucide-react'
 import { ProgressionChord } from '@/types'
+import { baseChordNameFromValue } from '@/lib/chordPermutations'
 
 export default function ChatPage() {
   const router = useRouter()
@@ -17,8 +18,9 @@ export default function ChatPage() {
     fetch('/api/progress')
       .then(r => r.json())
       .then(data => {
-        const names = data.learnedChords?.map((c: { chordName: string }) => c.chordName) ?? []
-        setLearnedChords(names)
+        const names: string[] = data.learnedChords?.map((c: { chordName: string }) => c.chordName) ?? []
+        const baseNames = names.map(n => baseChordNameFromValue(n))
+        setLearnedChords([...new Set(baseNames)])
       })
       .catch(() => {})
   }, [])

@@ -12,7 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ProgressionChord, ChordMatch } from '@/types'
 import { Play, Square, RotateCcw, Zap, Maximize2, Minimize2, Settings, BookmarkPlus } from 'lucide-react'
-import { CURRICULUM_ORDER } from '@/lib/chords'
+import { CURRICULUM_ORDER, getChord } from '@/lib/chords'
+import { baseChordNameFromValue } from '@/lib/chordPermutations'
 import { toast } from 'sonner'
 
 const DEFAULT_PROGRESSION: ProgressionChord[] = [
@@ -101,7 +102,9 @@ function PracticeContent() {
   }
 
   function useLearnedProgression() {
-    const learned = CURRICULUM_ORDER.filter(c => learnedChords.includes(c))
+    const fromCurriculum = CURRICULUM_ORDER.filter(c => learnedChords.includes(c))
+    const extraLearned = learnedChords.filter(c => !fromCurriculum.includes(c) && getChord(c))
+    const learned = [...fromCurriculum, ...extraLearned]
     if (learned.length < 2) {
       toast.error('Learn at least 2 chords first!')
       return
@@ -379,7 +382,7 @@ function PracticeContent() {
               <div className="flex flex-wrap gap-1.5">
                 {progression.map((p, i) => (
                   <Badge key={i} variant="outline" className="font-mono">
-                    {p.chord} ×{p.beats}
+                    {baseChordNameFromValue(p.chord)} ×{p.beats}
                   </Badge>
                 ))}
               </div>

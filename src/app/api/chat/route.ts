@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { getOpenAI, buildSystemPrompt } from '@/lib/openai'
+import { baseChordNameFromValue } from '@/lib/chordPermutations'
 
 type ChatModel = 'gpt-5-mini' | 'gpt-5'
 const DEFAULT_MODEL: ChatModel = 'gpt-5-mini'
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest) {
       select: { songId: true },
     }),
   ])
-  const chordNames = learnedChords.map(c => c.chordName)
+  const chordNames = [...new Set(learnedChords.map(c => baseChordNameFromValue(c.chordName)))]
   const songIds = learnedSongs.map(s => s.songId)
 
   const systemPrompt = buildSystemPrompt(chordNames, songIds)
@@ -43,7 +44,7 @@ export async function POST(req: NextRequest) {
       ...messages,
     ],
     stream: true,
-    max_tokens: 1000,
+    max_completion_tokens: 1000,
   })
 
   const encoder = new TextEncoder()

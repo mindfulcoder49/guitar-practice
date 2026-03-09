@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { CURRICULUM_ORDER } from '@/lib/chords'
+import { isChordFormId } from '@/lib/chordPermutations'
 import { BookOpen, Zap, MessageSquare, Music2, CheckCircle, Clock, Music, BookmarkCheck } from 'lucide-react'
 
 export default async function DashboardPage() {
@@ -30,7 +31,7 @@ export default async function DashboardPage() {
     }),
   ])
 
-  const learnedNames = learnedChords.map(c => c.chordName)
+  const learnedNames = learnedChords.map(c => c.chordName).filter(name => !isChordFormId(name))
   const progressPercent = Math.round((learnedNames.length / CURRICULUM_ORDER.length) * 100)
   const nextChord = CURRICULUM_ORDER.find(c => !learnedNames.includes(c))
 

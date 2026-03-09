@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
-import { Guitar, BookOpen, Zap, MessageSquare, LayoutDashboard, LogOut, Music, Library, Radio } from 'lucide-react'
+import { Guitar, BookOpen, Zap, MessageSquare, LayoutDashboard, LogOut, Music, Library, Radio, Shapes } from 'lucide-react'
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Home',     icon: LayoutDashboard },
@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { href: '/songs',     label: 'Songs',    icon: Music },
   { href: '/tuner',     label: 'Tuner',    icon: Radio },
   { href: '/chat',      label: 'Chat',     icon: MessageSquare },
+  { href: '/chord-generator', label: 'Generator', icon: Shapes },
   { href: '/catalog',   label: 'Catalog',  icon: Library },
 ]
 

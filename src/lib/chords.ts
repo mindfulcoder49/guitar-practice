@@ -1,4 +1,10 @@
 import { ChordTemplate } from '@/types'
+import {
+  buildTemplateFromFormId,
+  generateChordPermutations,
+  ROOT_OPTIONS,
+  ChordQuality,
+} from './chordPermutations'
 
 // Pitch class indices: C=0, C#=1, D=2, D#=3, E=4, F=5, F#=6, G=7, G#=8, A=9, A#=10, B=11
 
@@ -357,8 +363,53 @@ export const CURRICULUM_ORDER = [
 
 export const ALL_CHORDS = Object.values(CHORD_TEMPLATES)
 
+const FLAT_TO_SHARP: Record<string, string> = {
+  Db: 'C#',
+  Eb: 'D#',
+  Gb: 'F#',
+  Ab: 'G#',
+  Bb: 'A#',
+}
+
+const GENERATED_TRIAD_CACHE: Record<string, ChordTemplate | undefined> = {}
+
+function canonicalizeRoot(root: string): string {
+  return FLAT_TO_SHARP[root] ?? root
+}
+
+function parseTriadName(name: string): { root: string; quality: ChordQuality } | null {
+  const m = name.match(/^([A-G])([#b]?)(m?)$/)
+  if (!m) return null
+  const root = canonicalizeRoot(`${m[1]}${m[2] ?? ''}`)
+  if (!(ROOT_OPTIONS as readonly string[]).includes(root)) return null
+  return { root, quality: m[3] === 'm' ? 'minor' : 'major' }
+}
+
+function getGeneratedTriadTemplate(name: string): ChordTemplate | undefined {
+  if (name in GENERATED_TRIAD_CACHE) return GENERATED_TRIAD_CACHE[name]
+  const parsed = parseTriadName(name)
+  if (!parsed) {
+    GENERATED_TRIAD_CACHE[name] = undefined
+    return undefined
+  }
+  const voicings = generateChordPermutations(parsed.root as (typeof ROOT_OPTIONS)[number], parsed.quality)
+  if (voicings.length === 0) {
+    GENERATED_TRIAD_CACHE[name] = undefined
+    return undefined
+  }
+  const canonicalName = parsed.quality === 'minor' ? `${parsed.root}m` : parsed.root
+  const base = voicings[0]
+  const out: ChordTemplate = {
+    ...base,
+    name: canonicalName,
+    displayName: parsed.quality === 'minor' ? `${parsed.root} Minor` : `${parsed.root} Major`,
+  }
+  GENERATED_TRIAD_CACHE[name] = out
+  return out
+}
+
 export function getChord(name: string): ChordTemplate | undefined {
-  return CHORD_TEMPLATES[name]
+  return CHORD_TEMPLATES[name] ?? buildTemplateFromFormId(name) ?? getGeneratedTriadTemplate(name)
 }
 
 export function getCurriculumChords(): ChordTemplate[] {

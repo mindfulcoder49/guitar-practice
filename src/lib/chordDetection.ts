@@ -1,4 +1,4 @@
-import { CHORD_TEMPLATES, CURRICULUM_ORDER, getChordMidiNotes } from './chords'
+import { CHORD_TEMPLATES, CURRICULUM_ORDER, getChord, getChordMidiNotes } from './chords'
 import { ChordMatch } from '@/types'
 
 // ─── Note-salience vector ──────────────────────────────────────────────────────
@@ -61,6 +61,30 @@ const NOTE_TEMPLATES: Record<string, number[]> = (() => {
   }
   return out
 })()
+
+function buildNoteTemplateForChord(name: string): number[] | null {
+  const chord = getChord(name)
+  if (!chord) return null
+  const vec = new Array(SALIENCE_SIZE).fill(0)
+  for (const midi of getChordMidiNotes(chord)) {
+    const baseFreq = 440 * Math.pow(2, (midi - 69) / 12)
+    for (const { n, w } of HARMONIC_PARTIALS) {
+      const hFreq = baseFreq * n
+      const hMidi = Math.round(69 + 12 * Math.log2(hFreq / 440))
+      const idx = hMidi - GUITAR_MIDI_MIN
+      if (idx >= 0 && idx < SALIENCE_SIZE) vec[idx] = Math.max(vec[idx], w)
+    }
+  }
+  return vec
+}
+
+function getOrBuildNoteTemplate(chordName: string): number[] | null {
+  if (NOTE_TEMPLATES[chordName]) return NOTE_TEMPLATES[chordName]
+  const built = buildNoteTemplateForChord(chordName)
+  if (!built) return null
+  NOTE_TEMPLATES[chordName] = built
+  return built
+}
 
 // ─── Note-salience extraction from FFT ────────────────────────────────────────
 /**
@@ -136,7 +160,7 @@ const NOTE_MARGIN_THRESHOLD = 0.06
  * where a similar chord with fewer notes beats the real one.
  */
 export function scoreChordFromSalience(salience: number[], chordName: string): number {
-  const template = NOTE_TEMPLATES[chordName]
+  const template = getOrBuildNoteTemplate(chordName)
   if (!template) return 0
   const max = Math.max(...salience)
   if (max === 0) return 0

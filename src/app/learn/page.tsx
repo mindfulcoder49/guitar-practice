@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ChordDiagram } from '@/components/ChordDiagram'
 import { CURRICULUM_ORDER, CHORD_TEMPLATES } from '@/lib/chords'
+import { isChordFormId } from '@/lib/chordPermutations'
 import { CheckCircle, Lock, ChevronRight } from 'lucide-react'
 
 export default async function LearnPage() {
@@ -17,7 +18,11 @@ export default async function LearnPage() {
     where: { userId: session.user.id },
     select: { chordName: true, accuracy: true },
   })
-  const learnedMap = Object.fromEntries(learnedChords.map(c => [c.chordName, c.accuracy]))
+  const learnedMap = Object.fromEntries(
+    learnedChords
+      .filter(c => !isChordFormId(c.chordName))
+      .map(c => [c.chordName, c.accuracy])
+  )
 
   return (
     <div className="min-h-screen bg-background">

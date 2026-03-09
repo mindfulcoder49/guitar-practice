@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState, type RefObject } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChordMatch, ProgressionChord } from '@/types'
-import { CHORD_TEMPLATES, chordsInSameFamily } from '@/lib/chords'
+import { chordsInSameFamily, getChord } from '@/lib/chords'
 import { scoreChordFromSalience } from '@/lib/chordDetection'
+import { baseChordNameFromValue } from '@/lib/chordPermutations'
 
 // ─── Highway constants ────────────────────────────────────────────────────────
 
@@ -74,8 +75,9 @@ interface ChordHighwayProps {
 // the highway lane orientation so the diagrams line up visually.
 
 function HorizontalChordCard({ chordName, opacity = 1 }: { chordName: string; opacity?: number }) {
-  const template = CHORD_TEMPLATES[chordName]
+  const template = getChord(chordName)
   if (!template) return null
+  const label = baseChordNameFromValue(chordName)
 
   const svgW = CARD_LEFT_PAD + CARD_FRETS * CARD_FRET_W + 6
   const svgH = CARD_TOP_PAD + 6 * CARD_H + 4
@@ -90,7 +92,7 @@ function HorizontalChordCard({ chordName, opacity = 1 }: { chordName: string; op
         color: 'rgba(255,255,255,0.85)',
         textAlign: 'center', marginBottom: 2,
       }}>
-        {chordName}
+        {label}
       </p>
       <svg width={svgW} height={svgH}>
 
@@ -220,7 +222,7 @@ function HorizontalChordCard({ chordName, opacity = 1 }: { chordName: string; op
 //   null    → no gem (muted / don't play)
 
 function stringGems(chordName: string): ('open' | number | null)[] {
-  const t = CHORD_TEMPLATES[chordName]
+  const t = getChord(chordName)
   if (!t) return Array(6).fill(null)
   return t.openStrings.map(v => {
     if (v === -1) return null
@@ -276,11 +278,12 @@ function GemColumn({ chordName, flash }: {
 }) {
   const gems = stringGems(chordName)          // [0]=Low E … [5]=High e
   const displayGems = [...gems].reverse()     // [0]=High e (top) … [5]=Low E (bottom)
+  const label = baseChordNameFromValue(chordName)
 
   return (
     <div className="flex flex-col items-center">
       <div className="text-xs sm:text-sm font-bold text-white/90 text-center mb-0.5 whitespace-nowrap" style={{ minWidth: GEM_W }}>
-        {chordName}
+        {label}
       </div>
       {displayGems.map((kind, displayIdx) => (
         <div key={displayIdx} style={{ height: LANE_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -567,7 +570,7 @@ export function ChordHighway({
                 transition={{ duration: 0.9, repeat: Infinity, ease: 'easeInOut' }}
               >
                 <p className="text-gray-300 font-semibold text-sm">Now play</p>
-                <p className="text-yellow-400 font-bold text-3xl leading-none">{pausedChord}</p>
+                <p className="text-yellow-400 font-bold text-3xl leading-none">{baseChordNameFromValue(pausedChord)}</p>
                 <div className="mt-1 p-2 rounded-lg" style={{ background: 'rgba(0,0,0,0.45)' }}>
                   <HorizontalChordCard chordName={pausedChord} opacity={1} />
                 </div>
